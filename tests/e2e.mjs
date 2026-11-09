@@ -177,7 +177,7 @@ const oneSets = await page.textContent('#one-sets');
 check('一测回角值 21/27', oneSets.includes('125°14′21″') && oneSets.includes('125°14′27″'), oneSets);
 const twoC = await page.textContent('#two-c');
 check('2C 值为负且 A/B 两列', twoC.includes('−30″') && twoC.includes('−36″') && twoC.includes('−6″') && twoC.includes('−12″'), twoC);
-check('水平距离均值', (await page.textContent('#distances')).includes('59.230') && (await page.textContent('#distances')).includes('114.552'));
+check('成果页不再单开水平距离表', (await page.locator('#distances').count()) === 0);
 check('成果记录含测站', (await page.textContent('#report')).includes('测站：测站 1'));
 await page.screenshot({ path: `${OUT}/${prefix}-05-summary.png` });
 
