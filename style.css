@@ -1633,3 +1633,92 @@ body.keypad-open .main {
     --accent-soft: rgba(141, 185, 236, 0.14);
   }
 }
+
+/* ---------- 测回进度 ---------- */
+
+.flow {
+  margin: 4px 12px 9px;
+  padding: 8px 12px 9px;
+  background: var(--seg-bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.flow-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.flow-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 0.01em;
+}
+
+.flow-count {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.flow-bar {
+  height: 4px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: var(--card-2);
+  overflow: hidden;
+}
+
+.flow-bar i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+  transition: width 0.2s ease;
+}
+
+/* ---------- 置盘 ---------- */
+
+.circle-card {
+  text-align: center;
+  padding: 18px 14px 20px;
+}
+
+.circle-label {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.circle-target {
+  margin: 6px 0 7px;
+  font-family: var(--mono);
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 700;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.circle-hint {
+  max-width: 300px;
+  margin: 0 auto;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.result-back {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 7px 2px;
+  padding: 3px 2px;
+  color: var(--primary);
+  font-size: 11.5px;
+  font-weight: 500;
+}
