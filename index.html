@@ -32,12 +32,13 @@
           <button type="button" class="icon-btn" id="btn-help" aria-label="说明">?</button>
         </div>
       </header>
-      <ol class="steps" id="steps">
-        <li><button type="button" class="step active" data-step="1"><i>1</i><span>设站</span></button></li>
-        <li><button type="button" class="step" data-step="2"><i>2</i><span>盘左</span></button></li>
-        <li><button type="button" class="step" data-step="3"><i>3</i><span>盘右</span></button></li>
-        <li><button type="button" class="step" data-step="4"><i>4</i><span>成果</span></button></li>
-      </ol>
+      <div class="flow">
+        <div class="flow-line">
+          <span class="flow-title" id="flow-title">设站</span>
+          <span class="flow-count" id="flow-count">0 / 4 面</span>
+        </div>
+        <div class="flow-bar"><i id="flow-fill"></i></div>
+      </div>
     </div>
 
     <main class="main" id="main">
@@ -51,7 +52,8 @@
             <li>用光学或激光对中器对准测站点，偏差控制在 1–2 mm；先圆气泡粗平，再管气泡精平。</li>
             <li>量仪器高并记录；开机检查电量、棱镜常数、温度气压改正和倾斜补偿。</li>
             <li>输入测站与后视点；照准后视方向，在仪器里配置后视度盘。</li>
-            <li>后视定向完成后，再进入盘左观测。</li>
+            <li>确定测回数：第 1 测回盘左起始读数约 0°，之后每测回按 180°/n 置盘。</li>
+            <li>后视定向完成后，再进入第 1 测回盘左观测。</li>
           </ol>
         </div>
 
@@ -74,6 +76,15 @@
               </select>
             </label>
             <label class="field">
+              <span>测回数</span>
+              <select id="round-count">
+                <option value="1">1 测回</option>
+                <option value="2" selected>2 测回</option>
+                <option value="3">3 测回</option>
+                <option value="4">4 测回</option>
+              </select>
+            </label>
+            <label class="field">
               <span>后视点</span>
               <input id="station-bs" type="text" autocomplete="off" placeholder="如 GCP1" />
             </label>
@@ -82,54 +93,45 @@
 
         <div class="inline-tip">
           <span class="dot"></span>
-          <span>后视定向完成后，点“开始盘左”</span>
+          <span>后视定向完成后，点“开始第 1 测回”</span>
         </div>
       </section>
 
-      <!-- 2 盘左 -->
-      <section class="step-panel" id="step-2" hidden>
+      <!-- 2 当前测回的一个盘 -->
+      <section class="step-panel" id="step-face" hidden>
         <div class="guide card">
-          <div class="guide-kicker">现场操作 2 / 4 · 盘左</div>
-          <h2>盘左（正镜）观测</h2>
-          <ol class="guide-list">
-            <li>盘左照准目标 A，读水平度盘，按测距键读水平距离。</li>
-            <li>顺时针照准目标 B，读水平度盘和水平距离。</li>
-            <li>程序自动算半测回角值；完成第 1 测回后倒镜，进入盘右。</li>
-          </ol>
+          <div class="guide-kicker" id="face-kicker">现场操作</div>
+          <h2 id="face-guide-title">盘左（正镜）观测</h2>
+          <ol class="guide-list" id="face-guide-list"></ol>
         </div>
         <div class="face-head">
-          <h2>盘左观测</h2>
-          <span class="progress-pill" id="left-progress">0 / 4</span>
+          <h2 id="face-title">测回 1 · 盘左</h2>
+          <span class="progress-pill" id="face-progress">0 / 2</span>
         </div>
-        <div class="round-list" data-face="left"></div>
-        <div class="panel-actions">
-          <button type="button" class="add-btn" data-add="left">＋ 测回</button>
-        </div>
+        <div class="round-list" id="face-round"></div>
       </section>
 
-      <!-- 3 盘右 -->
-      <section class="step-panel" id="step-3" hidden>
+      <!-- 3 置盘 -->
+      <section class="step-panel" id="step-circle" hidden>
         <div class="guide card">
-          <div class="guide-kicker">现场操作 3 / 4 · 盘右</div>
-          <h2>盘右（倒镜）观测</h2>
+          <div class="guide-kicker">测回之间 · 置盘</div>
+          <h2 id="circle-title">第 2 测回前配置水平度盘</h2>
           <ol class="guide-list">
-            <li>倒镜，盘右先照准目标 B，再照准目标 A（与盘左顺序相反）。</li>
-            <li>每个目标读水平度盘并测距；程序自动算半测回和 2C。</li>
-            <li>2C 或半测回互差超限时，先检查仪器与操作，再重测该测回。</li>
+            <li>盘左照准目标 A，保持照准不动。</li>
+            <li>用仪器的置盘/配置度盘功能，把 A 的水平度盘读数配置到下面这个起始值附近。</li>
+            <li>配置完成后不要再动度盘，直接进入本测回盘左观测。</li>
           </ol>
         </div>
-        <div class="face-head">
-          <h2>盘右观测</h2>
-          <span class="progress-pill" id="right-progress">0 / 4</span>
-        </div>
-        <div class="round-list" data-face="right"></div>
-        <div class="panel-actions">
-          <button type="button" class="add-btn" data-add="right">＋ 测回</button>
+        <div class="card circle-card">
+          <div class="circle-label" id="circle-label">第 2 测回起始读数</div>
+          <div class="circle-target" id="circle-target">90°00′00″</div>
+          <div class="circle-hint" id="circle-hint">n 个测回按 180°/n 递增；2 测回为 0°、90°</div>
         </div>
       </section>
 
       <!-- 4 成果 -->
-      <section class="step-panel" id="step-4" hidden>
+      <section class="step-panel" id="step-result" hidden>
+        <button type="button" class="result-back" id="btn-result-back">← 返回盘右检查</button>
         <div class="result-card">
           <div class="result-eyebrow">各测回平均</div>
           <div class="result-value" id="sum-angle">—</div>
@@ -208,7 +210,8 @@
       </div>
       <div class="sheet-body">
         <h3>流程</h3>
-        <p>架设 → 对中 → 整平 → 开机检查 → 设站（仪器高）→ 后视定向 → 盘左观测 → 盘右观测 → 2C 与限差检核 → 记录成果、搬站。</p>
+        <p>架设 → 对中 → 整平 → 开机检查 → 设站（仪器高、测回数）→ 后视定向 → 第 1 测回盘左 → 同测回盘右 → 置盘 → 下一测回盘左 → 盘右 → 成果检核。</p>
+        <p>一个测回 = 一个盘左半测回 + 一个盘右半测回，不能连续测两个盘左。测回之间按 180°/n 置盘：2 测回为 0°、90°；3 测回为 0°、60°、120°；4 测回为 0°、45°、90°、135°。</p>
         <h3>公式</h3>
         <p>半测回：β<sub>L</sub>=b<sub>L</sub>−a<sub>L</sub>，β<sub>R</sub>=b<sub>R</sub>−a<sub>R</sub>；一测回：β=(β<sub>L</sub>+β<sub>R</sub>)/2；各测回平均：Σβ/n。</p>
         <p>2C = L − (R ± 180°)；2C 互差 = 各方向 2C 的最大值 − 最小值。</p>
@@ -226,9 +229,6 @@
       <div class="round-head">
         <span class="round-no"></span>
         <span class="round-angle"></span>
-        <button type="button" class="btn-x btn-del" aria-label="删除该测回">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
-        </button>
       </div>
       <div class="read-row" data-target="a">
         <span class="read-tag">A</span>
