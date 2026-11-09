@@ -42,7 +42,7 @@ function createRound() {
 }
 
 function defaultStation() {
-  return { name: '测站 1', ih: '1.500', instrument: 'DJ6', bs: '后视点' };
+  return { name: '测站 1', instrument: 'DJ6', bs: '后视点' };
 }
 
 function defaultState() {
@@ -91,7 +91,6 @@ function normalizeState(raw) {
     roundCount: count,
     station: {
       name: String(raw?.station?.name ?? defaultStation().name),
-      ih: String(raw?.station?.ih ?? defaultStation().ih),
       instrument: raw?.station?.instrument === 'DJ2' ? 'DJ2' : 'DJ6',
       bs: String(raw?.station?.bs ?? defaultStation().bs),
     },
@@ -164,8 +163,7 @@ function allComplete() {
 }
 
 function setupValid() {
-  const ih = Number(state.station.ih);
-  return Boolean(state.station.name.trim()) && Number.isFinite(ih) && ih > 0;
+  return Boolean(state.station.name.trim());
 }
 
 function startReading(roundIndex, count = state.roundCount) {
@@ -797,7 +795,7 @@ function renderSummary() {
 function buildReport(summary) {
   const lines = [];
   lines.push('全站仪测回成果');
-  lines.push(`测站：${state.station.name}    仪器：${state.station.instrument}    仪器高：${state.station.ih} m    测回数：${state.roundCount}`);
+  lines.push(`测站：${state.station.name}    仪器：${state.station.instrument}    测回数：${state.roundCount}`);
   if (state.station.bs) lines.push(`后视点：${state.station.bs}`);
   lines.push(`各测回平均：${summary.angle != null ? formatAngle(summary.angle) : '—'}`);
   summary.calcs.forEach((item, index) => {
@@ -858,7 +856,7 @@ function goPhase(phase, roundIndex = state.roundIndex) {
 function handleNext() {
   if (state.phase === 'setup') {
     if (!setupValid()) {
-      toast('请填测站名称和有效仪器高');
+      toast('请填测站名称');
       $('#station-name').focus();
       return;
     }
@@ -910,7 +908,7 @@ function demoState() {
     phase: 'result',
     roundIndex: 1,
     roundCount: 2,
-    station: { name: 'GCP2', ih: '1.500', instrument: 'DJ6', bs: 'GCP1' },
+    station: { name: 'GCP2', instrument: 'DJ6', bs: 'GCP1' },
     rounds: [
       {
         left: { a: reading(0, 20, 42, '59.230'), b: reading(125, 35, 0, '114.552') },
@@ -984,7 +982,6 @@ function fallbackCopy(text, done) {
 
 function syncSetupInputs() {
   $('#station-name').value = state.station.name;
-  $('#station-ih').value = state.station.ih;
   $('#instrument').value = state.station.instrument;
   $('#round-count').value = String(state.roundCount);
   $('#station-bs').value = state.station.bs;
@@ -1004,10 +1001,6 @@ function setRoundCount(count) {
 function bindSetup() {
   $('#station-name').addEventListener('input', (event) => {
     state.station.name = event.target.value;
-    save();
-  });
-  $('#station-ih').addEventListener('input', (event) => {
-    state.station.ih = event.target.value;
     save();
   });
   $('#instrument').addEventListener('change', (event) => {
