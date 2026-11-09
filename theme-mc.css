@@ -726,3 +726,9 @@ img {
     text-shadow: none;
   }
 }
+
+.point-name {
+  color: var(--primary);
+  font-family: var(--mono);
+  text-shadow: 1px 1px 0 #000;
+}
