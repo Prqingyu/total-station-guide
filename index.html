@@ -50,7 +50,7 @@
           <ol class="guide-list">
             <li>架头大致水平、三脚架踩实；仪器轻放，立即拧紧连接螺旋。</li>
             <li>用光学或激光对中器对准测站点，偏差控制在 1–2 mm；先圆气泡粗平，再管气泡精平。</li>
-            <li>量仪器高并记录；开机检查电量、棱镜常数、温度气压改正和倾斜补偿。</li>
+            <li>开机检查电量、棱镜常数、温度气压改正和倾斜补偿。</li>
             <li>输入测站与后视点；照准后视方向，在仪器里配置后视度盘。</li>
             <li>确定测回数：第 1 测回盘左起始读数约 0°，之后每测回按 180°/n 置盘。</li>
             <li>后视定向完成后，再进入第 1 测回盘左观测。</li>
@@ -63,10 +63,6 @@
             <label class="field">
               <span>测站名称</span>
               <input id="station-name" type="text" autocomplete="off" placeholder="如 GCP2" />
-            </label>
-            <label class="field">
-              <span>仪器高（m）</span>
-              <input id="station-ih" type="number" inputmode="decimal" step="0.001" min="0" placeholder="1.500" />
             </label>
             <label class="field">
               <span>仪器类型</span>
@@ -210,7 +206,7 @@
       </div>
       <div class="sheet-body">
         <h3>流程</h3>
-        <p>架设 → 对中 → 整平 → 开机检查 → 设站（仪器高、测回数）→ 后视定向 → 第 1 测回盘左 → 同测回盘右 → 置盘 → 下一测回盘左 → 盘右 → 成果检核。</p>
+        <p>架设 → 对中 → 整平 → 开机检查 → 设站（测回数）→ 后视定向 → 第 1 测回盘左 → 同测回盘右 → 置盘 → 下一测回盘左 → 盘右 → 成果检核。</p>
         <p>一个测回 = 一个盘左半测回 + 一个盘右半测回，不能连续测两个盘左。测回之间按 180°/n 置盘：2 测回为 0°、90°；3 测回为 0°、60°、120°；4 测回为 0°、45°、90°、135°。</p>
         <h3>公式</h3>
         <p>半测回：β<sub>L</sub>=b<sub>L</sub>−a<sub>L</sub>，β<sub>R</sub>=b<sub>R</sub>−a<sub>R</sub>；一测回：β=(β<sub>L</sub>+β<sub>R</sub>)/2；各测回平均：Σβ/n。</p>
