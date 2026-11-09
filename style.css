@@ -1722,3 +1722,286 @@ body.keypad-open .main {
   font-size: 11.5px;
   font-weight: 500;
 }
+
+/* ---------- 记录表 ---------- */
+
+.btn-table {
+  width: 100%;
+  height: 46px;
+  margin: 0 0 9px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: 12px;
+  color: var(--primary);
+  background: var(--card);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.record-card {
+  padding: 12px 10px 11px;
+}
+
+.record-doc-head {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.record-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.record-sub {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.record-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.record-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  table-layout: auto;
+  font-size: 10px;
+  color: var(--ink);
+}
+
+.record-table th,
+.record-table td {
+  border: 1px solid var(--line-strong);
+  padding: 3px 3px;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.record-table th {
+  background: var(--card-2);
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.record-table th:first-child,
+.record-table td:first-child {
+  width: 40px;
+}
+
+.record-table th:nth-child(2),
+.record-table td.rec-target {
+  width: 58px;
+}
+
+.record-table th:nth-child(3),
+.record-table td.rec-face {
+  width: 34px;
+}
+
+.record-table th:nth-child(4),
+.record-table th:nth-child(7),
+.record-table th:nth-child(10) {
+  width: auto;
+}
+
+.record-table th:last-child,
+.record-table td.rec-note {
+  width: 44px;
+}
+
+.rec-station {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 2px;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.rec-target {
+  font-size: 9px;
+  line-height: 1.2;
+  word-break: break-all;
+}
+
+.rec-face {
+  font-size: 9.5px;
+}
+
+.rec-num {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  padding-left: 1px !important;
+  padding-right: 1px !important;
+}
+
+.rec-angle {
+  padding: 2px !important;
+}
+
+.rec-angle-parts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.record-formula {
+  margin-top: 9px;
+  color: var(--ink-2);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.7;
+  text-align: center;
+}
+
+/* ---------- 历史测站 ---------- */
+
+.history-sheet {
+  display: flex;
+  flex-direction: column;
+  max-height: min(84dvh, 760px);
+}
+
+.history-sheet .sheet-body {
+  overflow-y: auto;
+}
+
+.history-search {
+  width: 100%;
+  height: 40px;
+  margin-bottom: 8px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card-2);
+  color: var(--ink);
+  font-size: 13px;
+  outline: none;
+}
+
+.history-search:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.history-item {
+  display: block;
+  width: 100%;
+  padding: 9px 2px;
+  border-bottom: 1px dashed var(--line);
+  text-align: left;
+}
+
+.history-item:active {
+  background: var(--card-2);
+}
+
+.hi-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hi-top b {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.hi-top span {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 9.5px;
+}
+
+.hi-sub {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.hi-angle {
+  margin-top: 3px;
+  color: var(--primary);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.history-empty {
+  padding: 22px 8px;
+  color: var(--muted);
+  font-size: 11.5px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+  .topbar,
+  .wizard-actions,
+  .result-back,
+  .result-actions,
+  .toast,
+  .sheet-wrap,
+  .keypad {
+    display: none !important;
+  }
+  .app {
+    display: block;
+    width: auto;
+    max-width: none;
+    min-height: 0;
+    height: auto;
+    overflow: visible;
+    border: 0;
+    background: #fff;
+  }
+  .main {
+    padding: 0;
+  }
+  .step-panel[hidden] {
+    display: none !important;
+  }
+  #step-table {
+    display: block !important;
+  }
+  .record-scroll {
+    overflow: visible;
+  }
+  .record-card {
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+  .record-table {
+    min-width: 0;
+    font-size: 9pt;
+  }
+}
+
+.record-hint {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 9.5px;
+  text-align: right;
+}
+
+.app.table-mode {
+  max-width: 900px;
+}
