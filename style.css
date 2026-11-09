@@ -1765,7 +1765,7 @@ body.keypad-open .main {
 
 .record-table {
   width: 100%;
-  min-width: 900px;
+  min-width: 1200px;
   border-collapse: collapse;
   table-layout: auto;
   font-size: 10px;
@@ -1793,25 +1793,55 @@ body.keypad-open .main {
   width: 40px;
 }
 
-.record-table th:nth-child(2),
-.record-table td.rec-target {
+.record-table th:nth-child(2) {
+  width: 36px;
+}
+
+.record-table th:nth-child(3) {
+  width: 38px;
+}
+
+.record-table th:nth-child(4) {
   width: 58px;
 }
 
-.record-table th:nth-child(3),
-.record-table td.rec-face {
-  width: 34px;
+.record-table th:nth-child(17) {
+  width: 46px;
 }
 
-.record-table th:nth-child(4),
-.record-table th:nth-child(7),
-.record-table th:nth-child(10) {
-  width: auto;
+.record-table th:nth-child(18) {
+  width: 76px;
+}
+
+.record-table th:nth-child(19) {
+  width: 56px;
 }
 
 .record-table th:last-child,
 .record-table td.rec-note {
   width: 44px;
+}
+
+.rec-round {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--ink-2);
+}
+
+.rec-dist,
+.rec-distmean {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rec-dir {
+  font-size: 9px;
+  line-height: 1.35;
+  white-space: normal;
+  word-break: break-all;
+  color: var(--ink-2);
 }
 
 .rec-station {
@@ -2003,7 +2033,7 @@ body.keypad-open .main {
 }
 
 .app.table-mode {
-  max-width: 1100px;
+  max-width: 1400px;
 }
 
 .distance-block {
