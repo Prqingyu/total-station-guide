@@ -911,10 +911,11 @@ function renderRecordTable(container, data) {
     groupHead('水平度盘读数', 3),
     groupHead('半测回角值', 3),
     groupHead('一测回平均角值', 3),
+    groupHead('各测回平均角值', 3),
     groupHead('备注', 1, 2),
   );
   const row2 = document.createElement('tr');
-  ['°', '′', '″', '°', '′', '″', '°', '′', '″'].forEach((unit) => {
+  ['°', '′', '″', '°', '′', '″', '°', '′', '″', '°', '′', '″'].forEach((unit) => {
     row2.appendChild(groupHead(unit));
   });
   thead.append(row1, row2);
@@ -926,6 +927,9 @@ function renderRecordTable(container, data) {
   const fs = station.fs || '前视点';
   const rounds = data.rounds || [];
   const totalRows = rounds.length * 4;
+  const overallAngle = meanAngles(
+    rounds.map((round) => roundCalc(round).one).filter((value) => value != null),
+  );
 
   rounds.forEach((round, roundIndex) => {
     const calc = roundCalc(round);
@@ -939,7 +943,7 @@ function renderRecordTable(container, data) {
     rows.forEach((item, rowIndex) => {
       const tr = document.createElement('tr');
       if (roundIndex === 0 && rowIndex === 0) {
-        const stationCell = tableCell(station.name || '', 'rec-station');
+        const stationCell = tableCell('测站', 'rec-station');
         stationCell.rowSpan = totalRows;
         tr.appendChild(stationCell);
       }
@@ -949,6 +953,7 @@ function renderRecordTable(container, data) {
       if (rowIndex === 0) {
         const halfCell = tableCell('', 'rec-angle');
         halfCell.rowSpan = 2;
+        halfCell.colSpan = 3;
         setAngleCell(halfCell, calc.l);
         halfCell.classList.add('rec-span');
         tr.appendChild(halfCell);
@@ -956,6 +961,7 @@ function renderRecordTable(container, data) {
       if (rowIndex === 2) {
         const halfCell = tableCell('', 'rec-angle');
         halfCell.rowSpan = 2;
+        halfCell.colSpan = 3;
         setAngleCell(halfCell, calc.r);
         halfCell.classList.add('rec-span');
         tr.appendChild(halfCell);
@@ -963,9 +969,18 @@ function renderRecordTable(container, data) {
       if (rowIndex === 0) {
         const oneCell = tableCell('', 'rec-angle');
         oneCell.rowSpan = 4;
+        oneCell.colSpan = 3;
         setAngleCell(oneCell, calc.one);
         oneCell.classList.add('rec-span');
         tr.appendChild(oneCell);
+        if (roundIndex === 0) {
+          const overallCell = tableCell('', 'rec-angle');
+          overallCell.rowSpan = totalRows;
+          overallCell.colSpan = 3;
+          setAngleCell(overallCell, overallAngle);
+          overallCell.classList.add('rec-span');
+          tr.appendChild(overallCell);
+        }
         const noteCell = tableCell('', 'rec-note');
         noteCell.rowSpan = 4;
         tr.appendChild(noteCell);
@@ -976,6 +991,41 @@ function renderRecordTable(container, data) {
 
   table.appendChild(tbody);
   container.append(head, table);
+
+  const distanceBlock = document.createElement('div');
+  distanceBlock.className = 'distance-block';
+  const distanceTitle = document.createElement('div');
+  distanceTitle.className = 'distance-title';
+  distanceTitle.textContent = '水平距离';
+  const distanceTable = document.createElement('table');
+  distanceTable.className = 'distance-table';
+  const distanceThead = document.createElement('thead');
+  const distanceHeadRow = document.createElement('tr');
+  ['水平距离方向', '水平距离均值'].forEach((text) => {
+    const th = document.createElement('th');
+    th.textContent = text;
+    distanceHeadRow.appendChild(th);
+  });
+  distanceThead.appendChild(distanceHeadRow);
+  distanceTable.appendChild(distanceThead);
+  const distanceTbody = document.createElement('tbody');
+  const distA = targetDistance(rounds, 'a');
+  const distB = targetDistance(rounds, 'b');
+  [
+    [`后视 ${bs}`, distA],
+    [`前视 ${fs}`, distB],
+  ].forEach(([label, stats]) => {
+    const tr = document.createElement('tr');
+    const nameCell = document.createElement('td');
+    nameCell.textContent = label;
+    const valueCell = document.createElement('td');
+    valueCell.textContent = stats ? `${formatMeters(stats.mean)} m` : '—';
+    tr.append(nameCell, valueCell);
+    distanceTbody.appendChild(tr);
+  });
+  distanceTable.appendChild(distanceTbody);
+  distanceBlock.append(distanceTitle, distanceTable);
+  container.appendChild(distanceBlock);
 }
 
 function renderTablePage() {
@@ -1240,13 +1290,24 @@ function loadDemo() {
 }
 
 function newStation() {
+  const previous = { ...state.station };
+  const count = state.roundCount;
   state = defaultState();
+  state.roundCount = count;
+  state.rounds = Array.from({ length: count }, () => createRound());
+  state.station = {
+    name: previous.fs || '',
+    instrument: previous.instrument || 'DJ6',
+    bs: previous.name || '',
+    fs: '',
+  };
   closeKeypad();
   syncSetupInputs();
   renderAll();
   save();
-  toast('已新建测站');
+  toast('已切到下一站：请填新前视点');
   window.scrollTo({ top: 0 });
+  setTimeout(() => $('#station-fs')?.focus(), 80);
 }
 
 function copyReport() {
