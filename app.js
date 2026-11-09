@@ -15,15 +15,17 @@ import {
   formatMeters,
   parseDistance,
   distanceStats,
+  secondsToDms,
 } from './calc.js';
 
 const STORE_KEY = 'tsguide.v2';
+const HISTORY_KEY = 'tsguide.history.v1';
 const VERSION = 2;
 const LIMITS = {
   DJ6: { half: 40, sets: 24, twoC: null },
   DJ2: { half: 20, sets: 12, twoC: 13 },
 };
-const PHASES = ['setup', 'left', 'right', 'circle', 'result'];
+const PHASES = ['setup', 'left', 'right', 'circle', 'result', 'table'];
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -42,7 +44,7 @@ function createRound() {
 }
 
 function defaultStation() {
-  return { name: '测站 1', instrument: 'DJ6', bs: '后视点' };
+  return { name: '测站 1', instrument: 'DJ6', bs: '后视点', fs: '前视点' };
 }
 
 function defaultState() {
@@ -53,6 +55,8 @@ function defaultState() {
     roundCount: 2,
     station: defaultStation(),
     rounds: [createRound(), createRound()],
+    recordId: null,
+    isDemo: false,
   };
 }
 
@@ -93,8 +97,11 @@ function normalizeState(raw) {
       name: String(raw?.station?.name ?? defaultStation().name),
       instrument: raw?.station?.instrument === 'DJ2' ? 'DJ2' : 'DJ6',
       bs: String(raw?.station?.bs ?? defaultStation().bs),
+      fs: String(raw?.station?.fs ?? defaultStation().fs),
     },
     rounds,
+    recordId: raw?.recordId ? String(raw.recordId) : null,
+    isDemo: Boolean(raw?.isDemo),
   };
 }
 
@@ -189,15 +196,25 @@ function roundCalc(round) {
   };
 }
 
-function targetDistance(target) {
+function targetDistance(rounds, target) {
   const values = [];
-  state.rounds.forEach((round) => {
+  rounds.forEach((round) => {
     ['left', 'right'].forEach((side) => {
       const value = parseDistance(round[side][target].dist);
       if (value != null) values.push(value);
     });
   });
   return distanceStats(values);
+}
+
+function recordSummary(record) {
+  const calcs = record.rounds.map(roundCalc);
+  const ones = calcs.map((item) => item.one).filter((v) => v != null);
+  return {
+    angle: meanAngles(ones),
+    distA: targetDistance(record.rounds, 'a'),
+    distB: targetDistance(record.rounds, 'b'),
+  };
 }
 
 function computeSummary() {
@@ -218,8 +235,8 @@ function computeSummary() {
     setsDiff: spreadAngles(ones),
     twoCSpread: twoSpreads.length ? Math.max(...twoSpreads) : null,
     limits,
-    distA: targetDistance('a'),
-    distB: targetDistance('b'),
+    distA: targetDistance(state.rounds, 'a'),
+    distB: targetDistance(state.rounds, 'b'),
   };
 }
 
@@ -620,6 +637,8 @@ function updateFlow() {
     $('#flow-title').textContent = `第 ${state.roundIndex + 1} / ${state.roundCount} 测回 · ${state.phase === 'left' ? '盘左' : '盘右'}`;
   } else if (state.phase === 'circle') {
     $('#flow-title').textContent = `置盘 · 准备第 ${state.roundIndex + 1} 测回`;
+  } else if (state.phase === 'table') {
+    $('#flow-title').textContent = '测回记录表';
   } else {
     $('#flow-title').textContent = '成果';
   }
@@ -631,6 +650,8 @@ function renderFaceGuide() {
   const roundIndex = state.roundIndex;
   const isLeft = face === 'left';
   const start = formatStartReading(roundIndex);
+  const bs = state.station.bs || '后视点';
+  const fs = state.station.fs || '前视点';
   const title = isLeft ? '盘左（正镜）观测' : '盘右（倒镜）观测';
   $('#face-kicker').textContent = `第 ${roundIndex + 1} / ${state.roundCount} 测回 · ${isLeft ? '盘左' : '盘右'}`;
   $('#face-guide-title').textContent = title;
@@ -640,13 +661,13 @@ function renderFaceGuide() {
   const items = isLeft
     ? [
         roundIndex === 0
-          ? `第 1 测回盘左：照准目标 A，把水平度盘配置到约 0°00′00″（略大于 0°）。`
-          : `第 ${roundIndex + 1} 测回盘左：本测回已在置盘页配置到约 ${start}。`,
-        '照准目标 A，读水平度盘并测距；顺时针照准目标 B，读数、测距。',
+          ? `第 1 测回盘左：照准后视点 ${bs}（A），把水平度盘配置到约 0°00′00″（略大于 0°）。`
+          : `第 ${roundIndex + 1} 测回盘左：本测回已在置盘页配置到约 ${start}；照准后视点 ${bs}（A）。`,
+        `读后视点 ${bs} 的水平和距离；顺时针照准前视点 ${fs}（B），读数、测距。`,
         '程序自动算半测回角值；完成后倒镜，测同一测回的盘右。',
       ]
     : [
-        '倒镜到盘右，先照准目标 B，再照准目标 A（与盘左顺序相反）。',
+        `倒镜到盘右，先照准前视点 ${fs}（B），再照准后视点 ${bs}（A）。`,
         '每个目标读水平度盘并测距；程序自动算半测回和 2C。',
         '2C 或半测回互差超限时，先检查仪器与操作，再重测该测回。',
       ];
@@ -662,6 +683,8 @@ function renderFlowPanels() {
   $('#step-face').hidden = !['left', 'right'].includes(state.phase);
   $('#step-circle').hidden = state.phase !== 'circle';
   $('#step-result').hidden = state.phase !== 'result';
+  $('#step-table').hidden = state.phase !== 'table';
+  $('#app').classList.toggle('table-mode', state.phase === 'table');
   updateFlow();
 }
 
@@ -683,7 +706,7 @@ function renderCircle() {
   $('#circle-title').textContent = `第 ${roundIndex + 1} 测回前配置水平度盘`;
   $('#circle-label').textContent = `第 ${roundIndex + 1} 测回起始读数`;
   $('#circle-target').textContent = target;
-  $('#circle-hint').textContent = `${state.roundCount} 个测回按 180°/n 递增；本测回配置到 ${target}，盘左照准目标 A 后读数应略大于该值。`;
+  $('#circle-hint').textContent = `${state.roundCount} 个测回按 180°/n 递增；本测回配置到 ${target}，盘左照准后视点 ${state.station.bs || '后视点'} 后读数应略大于该值。`;
 }
 
 function checkBadge(value, limit, neutralLabel) {
@@ -796,7 +819,7 @@ function buildReport(summary) {
   const lines = [];
   lines.push('全站仪测回成果');
   lines.push(`测站：${state.station.name}    仪器：${state.station.instrument}    测回数：${state.roundCount}`);
-  if (state.station.bs) lines.push(`后视点：${state.station.bs}`);
+  if (state.station.bs) lines.push(`后视点：${state.station.bs}    前视点：${state.station.fs || '—'}`);
   lines.push(`各测回平均：${summary.angle != null ? formatAngle(summary.angle) : '—'}`);
   summary.calcs.forEach((item, index) => {
     lines.push(
@@ -815,17 +838,285 @@ function buildReport(summary) {
   return lines.join('\n');
 }
 
+/* ---------------- 测回法记录表 ---------------- */
+
+function pad2(value) {
+  return String(value).padStart(2, '0');
+}
+
+function readingParts(item) {
+  if (!item) return ['', '', ''];
+  return [String(item.d ?? ''), item.m ? pad2(item.m) : '', item.s ? pad2(item.s) : ''];
+}
+
+function angleParts(totalSec) {
+  if (!Number.isFinite(totalSec)) return ['—', '', ''];
+  const p = secondsToDms(totalSec);
+  return [String(p.d), pad2(p.m), Number.isInteger(p.s) ? String(p.s) : p.s.toFixed(1)];
+}
+
+function tableCell(text, className = '') {
+  const cell = document.createElement('td');
+  if (className) cell.className = className;
+  cell.textContent = text;
+  return cell;
+}
+
+function appendParts(row, parts) {
+  parts.forEach((value) => row.appendChild(tableCell(value, 'rec-num')));
+}
+
+function setAngleCell(cell, totalSec) {
+  const parts = angleParts(totalSec);
+  cell.classList.add('rec-angle');
+  const wrap = document.createElement('div');
+  wrap.className = 'rec-angle-parts';
+  parts.forEach((value) => {
+    const span = document.createElement('span');
+    span.textContent = value;
+    wrap.appendChild(span);
+  });
+  cell.appendChild(wrap);
+}
+
+function renderRecordTable(container, data) {
+  container.replaceChildren();
+
+  const head = document.createElement('div');
+  head.className = 'record-doc-head';
+  const title = document.createElement('div');
+  title.className = 'record-title';
+  title.textContent = '测回法水平角观测记录';
+  const sub = document.createElement('div');
+  sub.className = 'record-sub';
+  sub.textContent = '表 4-2';
+  head.append(title, sub);
+
+  const table = document.createElement('table');
+  table.className = 'record-table';
+
+  const thead = document.createElement('thead');
+  const row1 = document.createElement('tr');
+  const groupHead = (text, colspan = 1, rowspan = 1) => {
+    const th = document.createElement('th');
+    th.textContent = text;
+    if (colspan > 1) th.colSpan = colspan;
+    if (rowspan > 1) th.rowSpan = rowspan;
+    return th;
+  };
+  row1.append(
+    groupHead('测站', 1, 2),
+    groupHead('目标', 1, 2),
+    groupHead('竖盘位置', 1, 2),
+    groupHead('水平度盘读数', 3),
+    groupHead('半测回角值', 3),
+    groupHead('一测回平均角值', 3),
+    groupHead('备注', 1, 2),
+  );
+  const row2 = document.createElement('tr');
+  ['°', '′', '″', '°', '′', '″', '°', '′', '″'].forEach((unit) => {
+    row2.appendChild(groupHead(unit));
+  });
+  thead.append(row1, row2);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  const station = data.station || {};
+  const bs = station.bs || '后视点';
+  const fs = station.fs || '前视点';
+  const rounds = data.rounds || [];
+  const totalRows = rounds.length * 4;
+
+  rounds.forEach((round, roundIndex) => {
+    const calc = roundCalc(round);
+    const rows = [
+      { target: bs, face: '左', reading: round.left.a },
+      { target: fs, face: '左', reading: round.left.b },
+      { target: bs, face: '右', reading: round.right.a },
+      { target: fs, face: '右', reading: round.right.b },
+    ];
+
+    rows.forEach((item, rowIndex) => {
+      const tr = document.createElement('tr');
+      if (roundIndex === 0 && rowIndex === 0) {
+        const stationCell = tableCell(station.name || '', 'rec-station');
+        stationCell.rowSpan = totalRows;
+        tr.appendChild(stationCell);
+      }
+      tr.appendChild(tableCell(item.target, 'rec-target'));
+      tr.appendChild(tableCell(item.face, 'rec-face'));
+      appendParts(tr, readingParts(item.reading));
+      if (rowIndex === 0) {
+        const halfCell = tableCell('', 'rec-angle');
+        halfCell.rowSpan = 2;
+        setAngleCell(halfCell, calc.l);
+        halfCell.classList.add('rec-span');
+        tr.appendChild(halfCell);
+      }
+      if (rowIndex === 2) {
+        const halfCell = tableCell('', 'rec-angle');
+        halfCell.rowSpan = 2;
+        setAngleCell(halfCell, calc.r);
+        halfCell.classList.add('rec-span');
+        tr.appendChild(halfCell);
+      }
+      if (rowIndex === 0) {
+        const oneCell = tableCell('', 'rec-angle');
+        oneCell.rowSpan = 4;
+        setAngleCell(oneCell, calc.one);
+        oneCell.classList.add('rec-span');
+        tr.appendChild(oneCell);
+        const noteCell = tableCell('', 'rec-note');
+        noteCell.rowSpan = 4;
+        tr.appendChild(noteCell);
+      }
+      tbody.appendChild(tr);
+    });
+  });
+
+  table.appendChild(tbody);
+  container.append(head, table);
+}
+
+function renderTablePage() {
+  if (state.phase !== 'table') return;
+  renderRecordTable($('#record-table'), {
+    station: state.station,
+    rounds: state.rounds,
+    roundCount: state.roundCount,
+  });
+}
+
+/* ---------------- 历史测站 ---------------- */
+
+function loadHistory() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
+  }
+}
+
+let history = loadHistory();
+
+function saveHistory() {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 50)));
+  } catch {
+    /* ignore */
+  }
+}
+
+function commitRecord() {
+  if (state.isDemo) return;
+  if (!state.recordId) {
+    state.recordId = `r${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  }
+  const record = {
+    id: state.recordId,
+    savedAt: Date.now(),
+    station: { ...state.station },
+    roundCount: state.roundCount,
+    rounds: JSON.parse(JSON.stringify(state.rounds)),
+  };
+  const index = history.findIndex((item) => item.id === record.id);
+  if (index >= 0) history[index] = record;
+  else history.unshift(record);
+  history = history.slice(0, 50);
+  saveHistory();
+  save();
+}
+
+function recordMatches(record, query) {
+  if (!query) return true;
+  const haystack = [
+    record.station?.name,
+    record.station?.bs,
+    record.station?.fs,
+    new Date(record.savedAt).toLocaleString('zh-CN'),
+  ]
+    .join(' ')
+    .toLowerCase();
+  return haystack.includes(query.toLowerCase());
+}
+
+function renderHistoryList(query = '') {
+  const list = $('#history-list');
+  list.replaceChildren();
+  const filtered = history.filter((record) => recordMatches(record, query));
+  if (!filtered.length) {
+    const empty = document.createElement('div');
+    empty.className = 'history-empty';
+    empty.textContent = query ? '没有匹配的测站' : '还没有记录；完成一个测站并进入成果后会自动保存。';
+    list.appendChild(empty);
+    return;
+  }
+  filtered.forEach((record) => {
+    const summary = recordSummary(record);
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'history-item';
+    const top = document.createElement('div');
+    top.className = 'hi-top';
+    const name = document.createElement('b');
+    name.textContent = record.station?.name || '未命名测站';
+    const date = document.createElement('span');
+    date.textContent = new Date(record.savedAt).toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    top.append(name, date);
+    const sub = document.createElement('div');
+    sub.className = 'hi-sub';
+    sub.textContent = `后视 ${record.station?.bs || '—'} · 前视 ${record.station?.fs || '—'} · ${record.roundCount || record.rounds?.length || 0} 测回`;
+    const angle = document.createElement('div');
+    angle.className = 'hi-angle';
+    angle.textContent = summary.angle != null ? formatAngle(summary.angle) : '—';
+    item.append(top, sub, angle);
+    item.addEventListener('click', () => openHistoryDetail(record));
+    list.appendChild(item);
+  });
+}
+
+function openHistory() {
+  history = loadHistory();
+  $('#history-sheet').hidden = false;
+  document.body.style.overflow = 'hidden';
+  $('#history-list-view').hidden = false;
+  $('#history-detail-view').hidden = true;
+  $('#history-search').value = '';
+  renderHistoryList('');
+}
+
+function closeHistory() {
+  $('#history-sheet').hidden = true;
+  document.body.style.overflow = '';
+}
+
+function openHistoryDetail(record) {
+  $('#history-list-view').hidden = true;
+  $('#history-detail-view').hidden = false;
+  renderRecordTable($('#history-detail'), {
+    station: record.station,
+    rounds: record.rounds,
+    roundCount: record.roundCount,
+  });
+}
+
 /* ---------------- 导航 ---------------- */
 
 function renderNav() {
   const prev = $('#btn-prev');
   const next = $('#btn-next');
   const bar = $('#wizard-actions');
-  bar.hidden = state.phase === 'result';
+  bar.hidden = state.phase === 'result' || state.phase === 'table';
 
   prev.hidden = state.phase === 'setup';
   prev.textContent = '上一步';
-  next.hidden = state.phase === 'result';
+  next.hidden = state.phase === 'result' || state.phase === 'table';
 
   if (state.phase === 'setup') next.textContent = '开始第 1 测回';
   else if (state.phase === 'left') next.textContent = '盘左完成，倒镜盘右';
@@ -841,6 +1132,7 @@ function renderAll() {
   renderFacePanel();
   renderCircle();
   renderSummary();
+  renderTablePage();
   renderNav();
 }
 
@@ -880,6 +1172,7 @@ function handleNext() {
       goPhase('circle', state.roundIndex + 1);
     } else {
       goPhase('result', state.roundIndex);
+      commitRecord();
     }
     return;
   }
@@ -897,6 +1190,8 @@ function handlePrev() {
     goPhase('right', state.roundIndex - 1);
   } else if (state.phase === 'result') {
     goPhase('right', state.roundCount - 1);
+  } else if (state.phase === 'table') {
+    goPhase('result', state.roundIndex);
   }
 }
 
@@ -908,7 +1203,7 @@ function demoState() {
     phase: 'result',
     roundIndex: 1,
     roundCount: 2,
-    station: { name: 'GCP2', instrument: 'DJ6', bs: 'GCP1' },
+    station: { name: 'GCP2', instrument: 'DJ6', bs: 'GCP1', fs: 'GCP3' },
     rounds: [
       {
         left: { a: reading(0, 20, 42, '59.230'), b: reading(125, 35, 0, '114.552') },
@@ -919,6 +1214,8 @@ function demoState() {
         right: { a: reading(270, 11, 42, '59.231'), b: reading(35, 26, 12, '114.553') },
       },
     ],
+    recordId: null,
+    isDemo: true,
   };
 }
 
@@ -985,6 +1282,7 @@ function syncSetupInputs() {
   $('#instrument').value = state.station.instrument;
   $('#round-count').value = String(state.roundCount);
   $('#station-bs').value = state.station.bs;
+  $('#station-fs').value = state.station.fs;
 }
 
 function setRoundCount(count) {
@@ -1012,6 +1310,10 @@ function bindSetup() {
     state.station.bs = event.target.value;
     save();
   });
+  $('#station-fs').addEventListener('input', (event) => {
+    state.station.fs = event.target.value;
+    save();
+  });
   $('#round-count').addEventListener('change', (event) => {
     const count = Number(event.target.value);
     if (hasData() && !confirm(`改为 ${count} 个测回会调整已有数据，继续？`)) {
@@ -1031,6 +1333,21 @@ function bindStatic() {
   $('#btn-copy').addEventListener('click', copyReport);
   $('#btn-new-station').addEventListener('click', newStation);
   $('#btn-result-back').addEventListener('click', handlePrev);
+  $('#btn-table').addEventListener('click', () => goPhase('table', state.roundIndex));
+  $('#btn-table-back').addEventListener('click', () => goPhase('result', state.roundIndex));
+  $('#btn-table-new').addEventListener('click', newStation);
+  $('#btn-print').addEventListener('click', () => window.print());
+
+  $('#btn-history').addEventListener('click', openHistory);
+  $('#btn-history-close').addEventListener('click', closeHistory);
+  $('#btn-history-back').addEventListener('click', () => {
+    $('#history-list-view').hidden = false;
+    $('#history-detail-view').hidden = true;
+  });
+  $('#history-search').addEventListener('input', (event) => renderHistoryList(event.target.value));
+  $('#history-sheet').addEventListener('click', (event) => {
+    if (event.target === $('#history-sheet')) closeHistory();
+  });
 
   $('#btn-help').addEventListener('click', () => {
     $('#help-sheet').hidden = false;
@@ -1051,6 +1368,7 @@ function bindStatic() {
       $('#help-sheet').hidden = true;
       document.body.style.overflow = '';
     }
+    if (event.key === 'Escape' && !$('#history-sheet').hidden) closeHistory();
   });
 
   bindSetup();
@@ -1068,8 +1386,8 @@ function registerSW() {
 function init() {
   bindStatic();
   syncSetupInputs();
-  // 刷新时如果还没测完却停在成果页，退回最后一个盘右
-  if (state.phase === 'result' && !allComplete()) {
+  // 刷新时如果还没测完却停在成果/表格页，退回最后一个盘右
+  if ((state.phase === 'result' || state.phase === 'table') && !allComplete()) {
     state.roundIndex = state.roundCount - 1;
     state.phase = faceComplete('right', state.roundIndex) ? 'result' : 'right';
   }
