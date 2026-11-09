@@ -67,7 +67,7 @@
 npm install
 npm test             # 计算核心单元测试（含 2C）
 npm run serve        # http://127.0.0.1:8788/
-node tests/e2e.mjs   # 无头 Edge 端到端测试（45 项）
+node tests/e2e.mjs   # 无头 Edge 端到端测试（46 项）
 node tests/pwa.mjs   # 线上 PWA / 离线测试
 node tools/screenshots.mjs
 ```
