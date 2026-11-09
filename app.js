@@ -200,6 +200,11 @@ function computeSummary() {
     .map((item) => (item.l != null && item.r != null ? angleSeparationSec(item.l, item.r) : null))
     .filter((v) => v != null);
   const twos = calcs.flatMap((item) => [item.cA, item.cB]).filter((v) => v != null);
+  const twoSpreads = calcs
+    .map((item) =>
+      item.cA != null && item.cB != null ? Math.abs(item.cA - item.cB) : null,
+    )
+    .filter((v) => v != null);
   const limits = LIMITS[state.station.instrument];
 
   return {
@@ -207,7 +212,8 @@ function computeSummary() {
     angle: meanAngles(ones),
     halfDiff: halfDiffs.length ? Math.max(...halfDiffs) : null,
     setsDiff: spreadAngles(ones),
-    twoCSpread: spread(twos),
+    twoCSpread: twoSpreads.length ? Math.max(...twoSpreads) : null,
+    twoCValues: twos,
     limits,
     distA: targetDistance('a'),
     distB: targetDistance('b'),
