@@ -119,7 +119,7 @@ async function seedHistory(page) {
 
 /* ---------- 表格全宽 ---------- */
 {
-  const { context, page } = await freshPage({ width: 900, height: 1100, mobile: false });
+  const { context, page } = await freshPage({ width: 1100, height: 1100, mobile: false });
   await showStage(page, 'result');
   await page.click('#btn-table');
   await page.waitForTimeout(300);
