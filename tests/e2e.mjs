@@ -115,7 +115,7 @@ check('盘右面板标题', (await page.textContent('#face-title')) === '测回 
 check('盘右不自动弹键盘', !(await page.isVisible('#keypad')));
 check(
   '盘右提示先 B 后 A',
-  (await page.textContent('#face-guide-list')).includes('先照准目标 B'),
+  (await page.textContent('#face-guide-list')).includes('先照准前视点'),
 );
 await typeReading(0, 'a', 180, 21, 12, '59.230');
 await typeReading(0, 'b', 305, 35, 36, '114.551');
@@ -180,6 +180,43 @@ check('2C 值为负且 A/B 两列', twoC.includes('−30″') && twoC.includes('
 check('水平距离均值', (await page.textContent('#distances')).includes('59.230') && (await page.textContent('#distances')).includes('114.552'));
 check('成果记录含测站', (await page.textContent('#report')).includes('测站：测站 1'));
 await page.screenshot({ path: `${OUT}/${prefix}-05-summary.png` });
+
+/* 记录表（PPT 格式） */
+await page.click('#btn-table');
+await page.waitForTimeout(250);
+check('记录表页标题', (await page.textContent('#flow-title')) === '测回记录表');
+check('记录表标题', (await page.textContent('#record-table .record-title')) === '测回法水平角观测记录');
+check('记录表 8 行读数', (await page.locator('#record-table tbody tr').count()) === 8);
+check(
+  '记录表列头',
+  (await page.textContent('#record-table thead')).includes('水平度盘读数') &&
+    (await page.textContent('#record-table thead')).includes('半测回角值') &&
+    (await page.textContent('#record-table thead')).includes('一测回平均角值'),
+);
+const tableText = await page.textContent('#record-table');
+check(
+  '记录表含角度',
+  tableText.includes('125') && tableText.includes('14') && tableText.includes('18'),
+  tableText.slice(0, 100),
+);
+await page.screenshot({ path: `${OUT}/${prefix}-06-table.png` });
+await page.click('#btn-table-back');
+await page.waitForTimeout(200);
+check('记录表可返回成果', (await page.textContent('#flow-title')) === '成果');
+
+/* 历史测站 */
+await page.click('#btn-history');
+await page.waitForTimeout(250);
+check('历史有 1 条测站', (await page.locator('.history-item').count()) === 1);
+check('历史条目含测站名', (await page.textContent('#history-list')).includes('测站 1'));
+await page.fill('#history-search', '测站');
+await page.waitForTimeout(100);
+check('历史搜索命中', (await page.locator('.history-item').count()) === 1);
+await page.locator('.history-item').first().click();
+await page.waitForTimeout(200);
+check('历史详情有记录表', (await page.locator('#history-detail .record-table').count()) === 1);
+await page.click('#btn-history-close');
+await page.waitForTimeout(150);
 
 /* 复制 */
 await page.click('#btn-copy');
