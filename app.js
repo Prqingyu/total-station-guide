@@ -390,8 +390,8 @@ function updateFaceExtras() {
     const cA = twoCSeconds(round.left.a, round.right.a);
     const cB = twoCSeconds(round.left.b, round.right.b);
     const parts = [];
-    if (cA != null) parts.push(`A ${formatSignedDelta(cA)}`);
-    if (cB != null) parts.push(`B ${formatSignedDelta(cB)}`);
+    if (cA != null) parts.push(`${state.station.bs || '后视点'} ${formatSignedDelta(cA)}`);
+    if (cB != null) parts.push(`${state.station.fs || '前视点'} ${formatSignedDelta(cB)}`);
     if (parts.length) {
       twoEl.hidden = false;
       twoEl.textContent = `2C  ${parts.join('   ')}`;
@@ -576,8 +576,13 @@ function buildRound(face, round, index) {
   const half = angleFromReadings(round[face].a, round[face].b);
   node.querySelector('.round-angle').textContent = half != null ? formatAngle(half) : '';
 
+  const labels = {
+    a: state.station.bs || '后视点',
+    b: state.station.fs || '前视点',
+  };
   ['a', 'b'].forEach((target) => {
     const row = node.querySelector(`.read-row[data-target="${target}"]`);
+    row.querySelector('.read-tag').textContent = labels[target];
     const item = round[face][target];
     row.querySelectorAll('.cell').forEach((cell) => {
       const part = cell.dataset.part;
@@ -600,8 +605,8 @@ function buildRound(face, round, index) {
     const cA = twoCSeconds(round.left.a, round.right.a);
     const cB = twoCSeconds(round.left.b, round.right.b);
     const parts = [];
-    if (cA != null) parts.push(`A ${formatSignedDelta(cA)}`);
-    if (cB != null) parts.push(`B ${formatSignedDelta(cB)}`);
+    if (cA != null) parts.push(`${state.station.bs || '后视点'} ${formatSignedDelta(cA)}`);
+    if (cB != null) parts.push(`${state.station.fs || '前视点'} ${formatSignedDelta(cB)}`);
     if (parts.length) {
       twoEl.hidden = false;
       twoEl.textContent = `2C  ${parts.join('   ')}`;
@@ -661,13 +666,13 @@ function renderFaceGuide() {
   const items = isLeft
     ? [
         roundIndex === 0
-          ? `第 1 测回盘左：照准后视点 ${bs}（A），把水平度盘配置到约 0°00′00″（略大于 0°）。`
-          : `第 ${roundIndex + 1} 测回盘左：本测回已在置盘页配置到约 ${start}；照准后视点 ${bs}（A）。`,
-        `读后视点 ${bs} 的水平和距离；顺时针照准前视点 ${fs}（B），读数、测距。`,
+          ? `第 1 测回盘左：照准后视点 ${bs}，把水平度盘配置到约 0°00′00″（略大于 0°）。`
+          : `第 ${roundIndex + 1} 测回盘左：本测回已在置盘页配置到约 ${start}；照准后视点 ${bs}。`,
+        `读后视点 ${bs} 的水平和距离；顺时针照准前视点 ${fs}，读数、测距。`,
         '程序自动算半测回角值；完成后倒镜，测同一测回的盘右。',
       ]
     : [
-        `倒镜到盘右，先照准前视点 ${fs}（B），再照准后视点 ${bs}（A）。`,
+        `倒镜到盘右，先照准前视点 ${fs}，再照准后视点 ${bs}。`,
         '每个目标读水平度盘并测距；程序自动算半测回和 2C。',
         '2C 或半测回互差超限时，先检查仪器与操作，再重测该测回。',
       ];
@@ -706,7 +711,11 @@ function renderCircle() {
   $('#circle-title').textContent = `第 ${roundIndex + 1} 测回前配置水平度盘`;
   $('#circle-label').textContent = `第 ${roundIndex + 1} 测回起始读数`;
   $('#circle-target').textContent = target;
-  $('#circle-hint').textContent = `${state.roundCount} 个测回按 180°/n 递增；本测回配置到 ${target}，盘左照准后视点 ${state.station.bs || '后视点'} 后读数应略大于该值。`;
+  const bs = state.station.bs || '后视点';
+  document.querySelectorAll('[data-circle-bs]').forEach((el) => {
+    el.textContent = bs;
+  });
+  $('#circle-hint').textContent = `${state.roundCount} 个测回按 180°/n 递增；本测回配置到 ${target}，盘左照准后视点 ${bs} 后读数应略大于该值。`;
 }
 
 function checkBadge(value, limit, neutralLabel) {
@@ -774,9 +783,11 @@ function renderSummary() {
 
   const twoC = $('#two-c');
   twoC.replaceChildren();
+  const bs = state.station.bs || '后视点';
+  const fs = state.station.fs || '前视点';
   const twoHead = document.createElement('div');
   twoHead.className = 'result-row result-head';
-  ['测回', 'A', 'B'].forEach((text) => {
+  ['测回', bs, fs].forEach((text) => {
     const span = document.createElement('span');
     span.textContent = text;
     twoHead.appendChild(span);
@@ -804,6 +815,8 @@ function renderSummary() {
 
 function buildReport(summary) {
   const lines = [];
+  const bs = state.station.bs || '后视点';
+  const fs = state.station.fs || '前视点';
   lines.push('全站仪测回成果');
   lines.push(`测站：${state.station.name}    仪器：${state.station.instrument}    测回数：${state.roundCount}`);
   if (state.station.bs) lines.push(`后视点：${state.station.bs}    前视点：${state.station.fs || '—'}`);
@@ -813,11 +826,11 @@ function buildReport(summary) {
       `测回 ${index + 1}：盘左 ${item.l != null ? formatAngle(item.l) : '—'}，盘右 ${item.r != null ? formatAngle(item.r) : '—'}，一测回 ${item.one != null ? formatAngle(item.one) : '—'}`,
     );
     lines.push(
-      `        2C：A ${item.cA != null ? formatSignedDelta(item.cA) : '—'}，B ${item.cB != null ? formatSignedDelta(item.cB) : '—'}`,
+      `        2C：${bs} ${item.cA != null ? formatSignedDelta(item.cA) : '—'}，${fs} ${item.cB != null ? formatSignedDelta(item.cB) : '—'}`,
     );
   });
   lines.push(
-    `水平距离：A ${summary.distA ? `${formatMeters(summary.distA.mean)} m` : '—'}；B ${summary.distB ? `${formatMeters(summary.distB.mean)} m` : '—'}`,
+    `水平距离：${bs} ${summary.distA ? `${formatMeters(summary.distA.mean)} m` : '—'}；${fs} ${summary.distB ? `${formatMeters(summary.distB.mean)} m` : '—'}`,
   );
   lines.push(
     `检核：半测回互差 ${summary.halfDiff != null ? formatDelta(summary.halfDiff) : '—'}；各测回互差 ${summary.setsDiff != null ? formatDelta(summary.setsDiff) : '—'}；2C 互差 ${summary.twoCSpread != null ? formatDelta(summary.twoCSpread) : '—'}`,
