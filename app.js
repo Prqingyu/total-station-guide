@@ -879,7 +879,7 @@ function setAngleCell(cell, totalSec) {
   cell.appendChild(wrap);
 }
 
-function renderRecordTable(container, data) {
+function renderRecordTableLegacy(container, data) {
   container.replaceChildren();
 
   const head = document.createElement('div');
@@ -1026,6 +1026,165 @@ function renderRecordTable(container, data) {
   distanceTable.appendChild(distanceTbody);
   distanceBlock.append(distanceTitle, distanceTable);
   container.appendChild(distanceBlock);
+}
+
+function renderRecordTable(container, data) {
+  container.replaceChildren();
+
+  const head = document.createElement('div');
+  head.className = 'record-doc-head';
+  const title = document.createElement('div');
+  title.className = 'record-title';
+  title.textContent = '测回法水平角观测记录';
+  const sub = document.createElement('div');
+  sub.className = 'record-sub';
+  sub.textContent = '表 4-2';
+  head.append(title, sub);
+
+  const table = document.createElement('table');
+  table.className = 'record-table';
+
+  const thead = document.createElement('thead');
+  const row1 = document.createElement('tr');
+  const groupHead = (text, colspan = 1, rowspan = 1, cls = '') => {
+    const th = document.createElement('th');
+    th.textContent = text;
+    if (colspan > 1) th.colSpan = colspan;
+    if (rowspan > 1) th.rowSpan = rowspan;
+    if (cls) th.className = cls;
+    return th;
+  };
+  row1.append(
+    groupHead('测站', 1, 2),
+    groupHead('测回数', 1, 2),
+    groupHead('竖盘位置', 1, 2),
+    groupHead('目标', 1, 2),
+    groupHead('水平度盘读数', 3),
+    groupHead('半测回角值', 3),
+    groupHead('一测回角值', 3),
+    groupHead('各测回平均值', 3),
+    groupHead('水平距离（m）', 1, 2),
+    groupHead('方向', 1, 2),
+    groupHead('水平距离均值（m）', 1, 2),
+    groupHead('备注', 1, 2),
+  );
+  const row2 = document.createElement('tr');
+  ['°', '′', '″', '°', '′', '″', '°', '′', '″', '°', '′', '″'].forEach((unit) => {
+    row2.appendChild(groupHead(unit));
+  });
+  thead.append(row1, row2);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  const station = data.station || {};
+  const bs = station.bs || '后视点';
+  const fs = station.fs || '前视点';
+  const stationLabel = station.name || '测站';
+  const rounds = data.rounds || [];
+  const totalRows = rounds.length * 4;
+  const halfRows = totalRows / 2;
+  const overallAngle = meanAngles(
+    rounds.map((round) => roundCalc(round).one).filter((value) => value != null),
+  );
+  const distA = targetDistance(rounds, 'a');
+  const distB = targetDistance(rounds, 'b');
+  let globalRow = 0;
+
+  rounds.forEach((round, roundIndex) => {
+    const calc = roundCalc(round);
+    const rows = [
+      { target: bs, face: '盘左', reading: round.left.a },
+      { target: fs, face: '盘左', reading: round.left.b },
+      { target: bs, face: '盘右', reading: round.right.a },
+      { target: fs, face: '盘右', reading: round.right.b },
+    ];
+
+    rows.forEach((item, rowIndex) => {
+      const tr = document.createElement('tr');
+      if (globalRow === 0) {
+        const stationCell = tableCell('测站', 'rec-station');
+        stationCell.rowSpan = totalRows;
+        tr.appendChild(stationCell);
+      }
+      if (rowIndex === 0) {
+        const roundCell = tableCell(String(roundIndex + 1), 'rec-round');
+        roundCell.rowSpan = 4;
+        tr.appendChild(roundCell);
+      }
+      if (rowIndex === 0) {
+        const faceCell = tableCell('盘左', 'rec-face');
+        faceCell.rowSpan = 2;
+        tr.appendChild(faceCell);
+      }
+      if (rowIndex === 2) {
+        const faceCell = tableCell('盘右', 'rec-face');
+        faceCell.rowSpan = 2;
+        tr.appendChild(faceCell);
+      }
+      tr.appendChild(tableCell(item.target, 'rec-target'));
+      appendParts(tr, readingParts(item.reading));
+
+      if (rowIndex === 0) {
+        const halfCell = tableCell('', 'rec-angle');
+        halfCell.rowSpan = 2;
+        halfCell.colSpan = 3;
+        setAngleCell(halfCell, calc.l);
+        tr.appendChild(halfCell);
+      }
+      if (rowIndex === 2) {
+        const halfCell = tableCell('', 'rec-angle');
+        halfCell.rowSpan = 2;
+        halfCell.colSpan = 3;
+        setAngleCell(halfCell, calc.r);
+        tr.appendChild(halfCell);
+      }
+      if (rowIndex === 0) {
+        const oneCell = tableCell('', 'rec-angle');
+        oneCell.rowSpan = 4;
+        oneCell.colSpan = 3;
+        setAngleCell(oneCell, calc.one);
+        tr.appendChild(oneCell);
+        if (roundIndex === 0) {
+          const overallCell = tableCell('', 'rec-angle');
+          overallCell.rowSpan = totalRows;
+          overallCell.colSpan = 3;
+          setAngleCell(overallCell, overallAngle);
+          tr.appendChild(overallCell);
+        }
+      }
+
+      const distCell = tableCell(item.reading?.dist || '—', 'rec-dist');
+      tr.appendChild(distCell);
+
+      if (globalRow === 0) {
+        const dirCell = tableCell(`${stationLabel} → ${bs}`, 'rec-dir');
+        dirCell.rowSpan = halfRows;
+        tr.appendChild(dirCell);
+        const meanCell = tableCell(distA ? formatMeters(distA.mean) : '—', 'rec-distmean');
+        meanCell.rowSpan = halfRows;
+        tr.appendChild(meanCell);
+      }
+      if (globalRow === halfRows) {
+        const dirCell = tableCell(`${stationLabel} → ${fs}`, 'rec-dir');
+        dirCell.rowSpan = halfRows;
+        tr.appendChild(dirCell);
+        const meanCell = tableCell(distB ? formatMeters(distB.mean) : '—', 'rec-distmean');
+        meanCell.rowSpan = halfRows;
+        tr.appendChild(meanCell);
+      }
+      if (globalRow === 0) {
+        const noteCell = tableCell('', 'rec-note');
+        noteCell.rowSpan = totalRows;
+        tr.appendChild(noteCell);
+      }
+
+      tbody.appendChild(tr);
+      globalRow += 1;
+    });
+  });
+
+  table.appendChild(tbody);
+  container.append(head, table);
 }
 
 function renderTablePage() {
