@@ -189,17 +189,28 @@ check('记录表标题', (await page.textContent('#record-table .record-title'))
 check('记录表 8 行读数', (await page.locator('#record-table .record-table tbody tr').count()) === 8);
 check(
   '记录表列头',
-  (await page.textContent('#record-table thead')).includes('水平度盘读数') &&
+  (await page.textContent('#record-table thead')).includes('测回数') &&
+    (await page.textContent('#record-table thead')).includes('水平度盘读数') &&
     (await page.textContent('#record-table thead')).includes('半测回角值') &&
-    (await page.textContent('#record-table thead')).includes('一测回平均角值') &&
-    (await page.textContent('#record-table thead')).includes('各测回平均角值'),
+    (await page.textContent('#record-table thead')).includes('一测回角值') &&
+    (await page.textContent('#record-table thead')).includes('各测回平均值') &&
+    (await page.textContent('#record-table thead')).includes('水平距离') &&
+    (await page.textContent('#record-table thead')).includes('方向'),
 );
 check('记录表测站写成测站', (await page.textContent('#record-table .rec-station')) === '测站');
-check('记录表有水平距离表', (await page.textContent('#record-table .distance-title')) === '水平距离');
+const dirText = await page.textContent('#record-table');
 check(
-  '水平距离方向与均值',
-  (await page.textContent('#record-table .distance-table')).includes('59.230') &&
-    (await page.textContent('#record-table .distance-table')).includes('114.552'),
+  '方向列含两条方向',
+  (await page.locator('#record-table .rec-dir').count()) === 2 &&
+    dirText.includes('测站 1') &&
+    dirText.includes('后视点') &&
+    dirText.includes('前视点'),
+);
+check(
+  '水平距离均值进入表内',
+  (await page.locator('#record-table .rec-distmean').count()) === 2 &&
+    dirText.includes('59.230') &&
+    dirText.includes('114.552'),
 );
 const tableText = await page.textContent('#record-table');
 check(
