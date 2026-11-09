@@ -799,19 +799,6 @@ function renderSummary() {
     twoC.appendChild(row);
   });
 
-  const distances = $('#distances');
-  distances.replaceChildren();
-  [['A', summary.distA], ['B', summary.distB]].forEach(([name, stats]) => {
-    const row = document.createElement('div');
-    row.className = 'result-row two-col';
-    const label = document.createElement('span');
-    label.textContent = `${name} 方向`;
-    const value = document.createElement('b');
-    value.textContent = stats ? `${formatMeters(stats.mean)} m` : '—';
-    row.append(label, value);
-    distances.appendChild(row);
-  });
-
   $('#report').textContent = buildReport(summary);
 }
 
