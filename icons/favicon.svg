@@ -1,13 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="测回计算器">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#205092"/>
-      <stop offset="1" stop-color="#0a2240"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="14" fill="url(#g)"/>
-  <path d="M12.4 45.2h39.2" stroke="#f5f7fb" stroke-width="2.7" stroke-linecap="round"/>
-  <path d="M32 45.2 46 25" stroke="#f5f7fb" stroke-width="2.7" stroke-linecap="round"/>
-  <path d="M32 45.2m0 0a14.8 14.8 0 0 0 25.5-8.5" fill="none" stroke="#d9a441" stroke-width="2.7" stroke-linecap="round"/>
-  <circle cx="32" cy="45.2" r="2.9" fill="#d9a441"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges" role="img" aria-label="TSGV2">
+  <rect x="0" y="0" width="16" height="16" fill="#0b0c0e"/>
+  <rect x="1" y="1" width="14" height="14" fill="#2f3136"/>
+  <rect x="1" y="1" width="14" height="1" fill="#5a5c63"/>
+  <rect x="1" y="1" width="1" height="14" fill="#5a5c63"/>
+  <rect x="1" y="14" width="14" height="1" fill="#0b0c0e"/>
+  <rect x="14" y="1" width="1" height="14" fill="#0b0c0e"/>
+  <rect x="4" y="4" width="8" height="1" fill="#d8fffb"/>
+  <rect x="4" y="5" width="8" height="1" fill="#4aedd9"/>
+  <rect x="7" y="6" width="2" height="7" fill="#4aedd9"/>
 </svg>
