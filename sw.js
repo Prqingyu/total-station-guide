@@ -2,14 +2,17 @@
    导航请求：网络优先，离线回退缓存。
    静态资源：缓存优先 + 后台更新（stale-while-revalidate），
    既保证离线可用，也能在下次打开时用上新版本。 */
-const CACHE = 'tsguide-v7';
+const CACHE = 'tsguide-v9';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
+  './theme-mc.css',
   './app.js',
   './calc.js',
   './manifest.webmanifest',
+  './fonts/fusion-12px/fusion-app.woff2',
+  './fonts/minecraftia/minecraft.woff2',
   './icons/favicon.svg',
   './icons/icon-64.png',
   './icons/icon-180.png',
