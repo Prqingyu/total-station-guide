@@ -1,6 +1,6 @@
 # 全站仪作业引导 · 测回法
 
-手机端 PWA：按现场顺序引导你完成 **设站 → 第 1 测回盘左 → 同测回盘右 → 置盘 → 第 2 测回 → 成果**，边输入读数边自动计算半测回角值、2C、一测回角值、各测回平均和限差。它是原「测回计算器」之外的新项目，原简单计算器保持不动。
+手机端 PWA：按现场顺序引导你完成 **设站 → 第 1 测回盘左 → 同测回盘右 → 置盘 → 第 2 测回 → 成果 → 记录表**，边输入读数边自动计算半测回角值、2C、一测回角值、各测回平均和限差。支持前后视点命名、按讲义格式输出记录表、查询以前的测站。它是原「测回计算器」之外的新项目，原简单计算器保持不动。
 
 [![tests](https://github.com/Prqingyu/total-station-guide/actions/workflows/test.yml/badge.svg)](https://github.com/Prqingyu/total-station-guide/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -10,23 +10,28 @@
 原简单计算器：<https://prqingyu.github.io/total-station-calc/>（未覆盖）
 
 <p>
-  <img src="docs/setup.png" width="19%" alt="设站引导" />
+  <img src="docs/setup.png" width="19%" alt="设站、前后视点" />
   <img src="docs/left.png" width="19%" alt="盘左" />
   <img src="docs/right.png" width="19%" alt="同测回盘右与2C" />
   <img src="docs/circle.png" width="19%" alt="置盘" />
-  <img src="docs/summary.png" width="19%" alt="成果与限差" />
+  <img src="docs/summary.png" width="19%" alt="成果" />
 </p>
 
 ## 引导流程
 
 一个测回 = **一个盘左半测回 + 一个盘右半测回**，不能连着测两个盘左；每测回结束后再置盘，进入下一测回。
 
-1. **设站**：架设、对中（≤1–2 mm）、整平、开机检查；输入测站名称、仪器类型、**测回数（1–4，默认 2）**和后视点。
-2. **第 1 测回盘左**：照准目标 A，把水平度盘配置到约 0°00′00″；读 A、B 水平角和距离，自动算半测回角值。
-3. **同测回盘右**：倒镜，先 B 后 A；读数、测距，自动算半测回和 2C。
-4. **置盘**：第 2 测回开始前，盘左照准 A，把水平度盘配置到约 **90°00′00″**（n 个测回按 180°/n 递增）。
+1. **设站**：架设、对中（≤1–2 mm）、整平、开机检查；输入测站名称、后视点、前视点、仪器类型和 **测回数（1–4，默认 2）**。
+2. **第 1 测回盘左**：照准后视点（A），把水平度盘配置到约 0°00′00″；读后视点、前视点（B）的读数和距离，自动算半测回角值。
+3. **同测回盘右**：倒镜，先前视点 B 后后视点 A；读数、测距，自动算半测回和 2C。
+4. **置盘**：第 2 测回开始前，盘左照准后视点，把水平度盘配置到约 **90°00′00″**（n 个测回按 180°/n 递增）。
 5. **第 2 测回**：再按盘左 → 盘右测一个完整测回。
-6. **成果**：各测回平均角、各测回角值、2C 值、水平距离、限差检核、成果记录；可复制成果或新建测站。
+6. **成果**：各测回平均角、各测回角值、2C 值、水平距离、限差检核、成果记录。
+7. **记录表**：按讲义表 4-2 的格式输出「测回法水平角观测记录」，含水平度盘读数、半测回角值、一测回平均角值、备注，可打印或存 PDF。
+
+## 历史测站
+
+完成一个测站进入成果页时会自动保存到本机历史；点右上角「记录」可以按测站名、后视点、前视点或日期搜索，点开任意一条即可查看当时的记录表。历史只存在本机浏览器，不上传服务器。
 
 ## 置盘规则
 
@@ -81,7 +86,7 @@
 npm install
 npm test             # 计算核心单元测试（含 2C）
 npm run serve        # http://127.0.0.1:8788/
-node tests/e2e.mjs   # 无头 Edge 端到端测试（56 项）
+node tests/e2e.mjs   # 无头 Edge 端到端测试（66 项）
 node tests/pwa.mjs   # 线上 PWA / 离线测试
 node tools/screenshots.mjs
 ```
@@ -99,7 +104,7 @@ sw.js                 Service Worker（离线缓存）
 manifest.webmanifest  PWA 清单
 tests/                单元测试、E2E、PWA 测试
 tools/                本地服务器与截图
-docs/                 README 截图
+docs/                 README 截图（含记录表、历史）
 ```
 
 ## License
