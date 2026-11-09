@@ -1,0 +1,728 @@
+@font-face {
+  font-family: "Fusion Pixel 12px Monospaced Simplified Chinese";
+  src: url("fonts/fusion-12px/fusion-app.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Minecraftia";
+  src: url("fonts/minecraftia/minecraft.woff2") format("woff2"),
+    url("fonts/minecraftia/minecraft.woff") format("woff"),
+    url("fonts/minecraftia/minecraft.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ============================================================
+   Minecraft 像素方块主题
+   参考：D:\ProjectQYN\CENTRAL\GUI（minecraft.css）
+   色值：面板 #2f3136 / 槽位 #1c1d22 / 黑描边 / 亮边 #5a5c63
+   关键：0 圆角、2px 像素边、硬明暗、无模糊阴影
+   ============================================================ */
+
+:root {
+  color-scheme: dark;
+
+  --bg: #15161a;
+  --bg-grid: transparent;
+  --card: #26282d;
+  --card-2: #1c1d22;
+  --ink: #e8e8ea;
+  --ink-2: #c3c6cc;
+  --muted: #9a9ca3;
+  --line: #0b0c0e;
+  --line-strong: #4a4c52;
+  --primary: #4aedd9;
+  --primary-ink: #0b0c0e;
+  --header-bg: rgba(21, 22, 26, 0.96);
+  --seg-bg: #202126;
+  --gold: #f0dfa8;
+  --gold-soft: #3b3524;
+  --green: #5fd85f;
+  --green-soft: rgba(95, 216, 95, 0.14);
+  --red: #ff5a5a;
+  --danger-soft: rgba(255, 90, 90, 0.16);
+  --ring: rgba(74, 237, 217, 0.38);
+  --shadow: none;
+  --shadow-sm: none;
+
+  --font: "Fusion Pixel 12px Monospaced Simplified Chinese", "Noto Sans CJK SC",
+    "Microsoft YaHei", sans-serif;
+  --mono: "Minecraftia", "Fusion Pixel 12px Monospaced Simplified Chinese",
+    "DejaVu Sans Mono", Consolas, monospace;
+}
+
+html,
+body {
+  background: var(--bg) !important;
+  color: var(--ink);
+}
+
+body {
+  font-family: var(--font) !important;
+  background-image: repeating-conic-gradient(
+    rgba(255, 255, 255, 0.022) 0% 25%,
+    transparent 0% 50%
+  ) !important;
+  background-size: 8px 8px !important;
+  background-attachment: fixed !important;
+  image-rendering: pixelated;
+}
+
+*::selection {
+  background: var(--primary);
+  color: #0b0c0e;
+}
+
+/* 基础方块化 */
+.app,
+.topbar,
+.card,
+.guide,
+.round,
+.cell,
+.dist-cell,
+.key,
+.chip,
+.icon-btn,
+.btn-primary,
+.btn-ghost,
+.btn-table,
+.add-btn,
+.result-card,
+.result-back,
+.record-card,
+.keypad,
+.keypad-top,
+.flow,
+.history-item,
+.history-search,
+.sheet,
+.wizard-actions,
+.toast,
+.check-badge,
+.record-table th,
+.record-table td,
+.distance-table th,
+.distance-table td {
+  border-radius: 0 !important;
+  backdrop-filter: none !important;
+}
+
+/* ---------- 外框 ---------- */
+.app {
+  background: transparent !important;
+  border: 2px solid #000 !important;
+  outline: 2px solid #0b0c0e;
+  box-shadow: none !important;
+  color: var(--ink);
+}
+
+.topbar {
+  background: #202126 !important;
+  border-bottom: 2px solid #000 !important;
+  box-shadow: inset 0 2px 0 #4a4c52, inset 0 -2px 0 #0b0c0e !important;
+}
+
+.brand-mark {
+  border-radius: 0 !important;
+  border: 2px solid #000;
+  outline: 2px solid #4a4c52;
+  image-rendering: pixelated;
+}
+
+h1,
+.guide h2,
+.face-head h2,
+.sheet-head h2,
+.result-eyebrow,
+.record-title {
+  font-family: var(--font) !important;
+  color: #ffffff !important;
+  text-shadow: 2px 2px 0 #000000 !important;
+  letter-spacing: 0.01em;
+}
+
+h1 {
+  font-family: var(--mono) !important;
+  font-weight: normal !important;
+  text-transform: uppercase;
+}
+
+.brand-sub,
+.hi-sub,
+.hi-top span,
+.record-sub,
+.record-hint,
+.guide-list,
+.field span,
+.circle-label,
+.circle-hint {
+  color: var(--muted) !important;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* ---------- 顶部按钮 ---------- */
+.chip,
+.icon-btn {
+  border: 2px solid !important;
+  border-color: #5a5c63 #0b0c0e #0b0c0e #5a5c63 !important;
+  outline: 2px solid #000 !important;
+  background: #2f3136 !important;
+  color: #e8e8ea !important;
+  box-shadow: none !important;
+  font-family: var(--mono) !important;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.chip:hover,
+.icon-btn:hover {
+  background: #3d4046 !important;
+  color: var(--primary) !important;
+}
+
+.chip:active,
+.icon-btn:active {
+  border-color: #0b0c0e #5a5c63 #5a5c63 #0b0c0e !important;
+  transform: translate(1px, 1px);
+}
+
+/* ---------- 进度面板 ---------- */
+.flow {
+  background: #26282d !important;
+  border: 2px solid #000 !important;
+  box-shadow: inset 2px 2px 0 #0b0c0e, inset -2px -2px 0 #4a4c52 !important;
+}
+
+.flow-title {
+  color: var(--primary) !important;
+  font-family: var(--mono) !important;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.flow-count {
+  color: var(--muted) !important;
+}
+
+.flow-bar {
+  height: 8px !important;
+  border-radius: 0 !important;
+  background: #101114 !important;
+  box-shadow: inset 1px 1px 0 #000, inset -1px -1px 0 #4a4c52 !important;
+}
+
+.flow-bar i {
+  border-radius: 0 !important;
+  background: repeating-linear-gradient(
+    90deg,
+    #5fd85f 0 4px,
+    #3fae4f 4px 8px
+  ) !important;
+}
+
+/* ---------- 引导卡片 / 内容卡 ---------- */
+.guide,
+.card {
+  background: #26282d !important;
+  border: 2px solid #000 !important;
+  box-shadow: inset 2px 2px 0 #0b0c0e, inset -2px -2px 0 #4a4c52 !important;
+}
+
+.guide {
+  border-left: 2px solid #000 !important;
+}
+
+.guide-kicker {
+  color: var(--primary) !important;
+  font-family: var(--mono) !important;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.guide-list {
+  color: #c3c6cc !important;
+}
+
+.card h3 {
+  color: var(--primary) !important;
+  font-family: var(--mono) !important;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* ---------- 表单：内凹槽 ---------- */
+.field input,
+.field select,
+.history-search {
+  background: #1c1d22 !important;
+  border: 2px solid !important;
+  border-color: #0b0c0e #4a4c52 #4a4c52 #0b0c0e !important;
+  box-shadow: inset 2px 2px 0 #08090b !important;
+  color: #ffffff !important;
+  font-family: var(--mono) !important;
+  font-size: 15px !important;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.field input:focus,
+.field select:focus,
+.history-search:focus {
+  outline: 2px solid var(--primary);
+  border-color: #0b0c0e #4a4c52 #4a4c52 #0b0c0e !important;
+  box-shadow: inset 2px 2px 0 #08090b !important;
+}
+
+/* ---------- 按钮：凸起方块 ---------- */
+.btn-primary,
+.btn-ghost,
+.btn-table,
+.add-btn,
+.result-back,
+.key,
+.keypad-hide,
+.wizard-actions button,
+.result-actions button {
+  border: 2px solid !important;
+  border-color: #5a5c63 #0b0c0e #0b0c0e #5a5c63 !important;
+  outline: 2px solid #000 !important;
+  box-shadow: none !important;
+  font-family: var(--font) !important;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.btn-primary {
+  background: #4caf50 !important;
+  color: #0b1109 !important;
+  text-shadow: none !important;
+  border-color: #8be88b #1d5b23 #1d5b23 #8be88b !important;
+}
+
+.btn-ghost,
+.btn-table,
+.add-btn,
+.result-back,
+.key,
+.keypad-hide {
+  background: #2f3136 !important;
+  color: #e8e8ea !important;
+}
+
+.btn-table {
+  border-style: solid !important;
+  color: var(--primary) !important;
+}
+
+.btn-primary:active,
+.btn-ghost:active,
+.btn-table:active,
+.add-btn:active,
+.key:active,
+.keypad-hide:active,
+.wizard-actions button:active,
+.result-actions button:active {
+  border-color: #0b0c0e #5a5c63 #5a5c63 #0b0c0e !important;
+  transform: translate(2px, 2px);
+  filter: brightness(0.9);
+}
+
+.result-back {
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  color: var(--primary) !important;
+  font-family: var(--mono) !important;
+  padding: 3px 2px !important;
+}
+
+/* ---------- 读数槽位 ---------- */
+.cell,
+.dist-cell {
+  background: #1c1d22 !important;
+  border: 2px solid #000 !important;
+  box-shadow: inset 2px 2px 0 #08090b, inset -2px -2px 0 #4a4c52 !important;
+}
+
+.cell-val,
+.dist-val {
+  color: #ffffff !important;
+  font-family: var(--mono) !important;
+  font-size: 18px !important;
+  font-weight: normal !important;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.dist-val {
+  font-size: 13px !important;
+}
+
+.cell-unit,
+.dist-unit {
+  color: #9a9ca3 !important;
+}
+
+.cell.active,
+.dist-cell.active {
+  border-color: var(--primary) !important;
+  background: #202126 !important;
+  box-shadow: inset 2px 2px 0 #08090b, inset -2px -2px 0 #4a4c52,
+    0 0 0 2px var(--primary) !important;
+}
+
+.cell.invalid,
+.dist-cell.invalid {
+  border-color: var(--red) !important;
+  background: #2a1717 !important;
+}
+
+/* ---------- 测回卡 ---------- */
+.round {
+  background: #26282d !important;
+  border: 2px solid #000 !important;
+  box-shadow: inset 2px 2px 0 #0b0c0e, inset -2px -2px 0 #4a4c52 !important;
+}
+
+.round-no {
+  color: var(--primary) !important;
+  font-family: var(--mono) !important;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.round-angle {
+  color: var(--gold) !important;
+  font-family: var(--mono) !important;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.round-2c {
+  color: var(--primary) !important;
+  border-top: 2px solid #0b0c0e !important;
+}
+
+.read-tag {
+  color: var(--muted) !important;
+  font-family: var(--mono) !important;
+}
+
+/* ---------- 成果 ---------- */
+.result-card {
+  background: #202126 !important;
+  border: 2px solid #000 !important;
+  outline: 2px solid #4a4c52;
+  box-shadow: inset 2px 2px 0 #0b0c0e, inset -2px -2px 0 #4a4c52 !important;
+}
+
+.result-card::before,
+.result-card::after {
+  display: none !important;
+}
+
+.result-eyebrow {
+  color: var(--primary) !important;
+  font-family: var(--mono) !important;
+  font-weight: normal !important;
+}
+
+.result-value {
+  color: var(--gold) !important;
+  font-family: var(--mono) !important;
+  font-weight: normal !important;
+  text-shadow: 3px 3px 0 #000 !important;
+}
+
+.check-row + .check-row,
+.result-table .result-row + .result-row {
+  border-top: 2px solid #0b0c0e !important;
+}
+
+.check-name {
+  color: #c3c6cc !important;
+}
+
+.check-value {
+  color: var(--gold) !important;
+  font-family: var(--mono) !important;
+  font-size: 14px !important;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.check-badge {
+  border: 2px solid #000 !important;
+  outline: 1px solid #4a4c52;
+  font-family: var(--mono) !important;
+  font-weight: normal !important;
+  padding: 3px 7px !important;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.check-badge.ok {
+  color: #0b1109 !important;
+  background: var(--green) !important;
+  text-shadow: none !important;
+}
+
+.check-badge.bad {
+  color: #0b0c0e !important;
+  background: var(--red) !important;
+  text-shadow: none !important;
+}
+
+.check-badge.neutral {
+  color: #c3c6cc !important;
+  background: #2f3136 !important;
+}
+
+.result-row > span,
+.result-row > b {
+  color: #e8e8ea;
+  font-family: var(--mono) !important;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.result-row > span:first-child,
+.result-head > span {
+  color: var(--muted) !important;
+}
+
+.result-row.two-col b {
+  color: var(--gold) !important;
+}
+
+.report {
+  background: #1c1d22 !important;
+  border: 2px solid #000 !important;
+  box-shadow: inset 2px 2px 0 #08090b, inset -2px -2px 0 #4a4c52 !important;
+  color: #c3c6cc !important;
+  font-family: var(--mono) !important;
+  text-shadow: none;
+}
+
+/* ---------- 键盘 ---------- */
+.keypad {
+  background: #202126 !important;
+  border: 2px solid #000 !important;
+  border-bottom: none !important;
+  box-shadow: inset 0 2px 0 #4a4c52 !important;
+}
+
+.keypad-top {
+  border-bottom: 2px solid #000;
+}
+
+.keypad-caption {
+  color: var(--primary) !important;
+  font-family: var(--mono) !important;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.keypad-hide {
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  color: var(--muted) !important;
+}
+
+.key {
+  background: #2f3136 !important;
+  color: #ffffff !important;
+  font-family: var(--mono) !important;
+  font-size: 22px !important;
+  font-weight: normal !important;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.key-fn {
+  background: #26282d !important;
+  color: var(--primary) !important;
+  font-size: 17px !important;
+}
+
+.key-done {
+  background: #4caf50 !important;
+  color: #0b1109 !important;
+  text-shadow: none !important;
+  border-color: #8be88b #1d5b23 #1d5b23 #8be88b !important;
+}
+
+.key-done:active {
+  border-color: #1d5b23 #8be88b #8be88b #1d5b23 !important;
+}
+
+/* ---------- 步骤按钮条 ---------- */
+.wizard-actions {
+  background: #202126 !important;
+  border-top: 2px solid #000 !important;
+  box-shadow: inset 0 2px 0 #4a4c52 !important;
+}
+
+/* ---------- 记录表 ---------- */
+.record-card {
+  background: #202126 !important;
+  border: 2px solid #000 !important;
+  box-shadow: inset 2px 2px 0 #0b0c0e, inset -2px -2px 0 #4a4c52 !important;
+}
+
+.record-title {
+  font-family: var(--font) !important;
+  color: #ffffff !important;
+}
+
+.record-sub,
+.record-formula {
+  color: var(--muted) !important;
+  font-family: var(--mono) !important;
+}
+
+.record-table {
+  border: 2px solid #000 !important;
+  background: #1c1d22 !important;
+}
+
+.record-table th,
+.record-table td {
+  border: 1px solid #0b0c0e !important;
+  background: #26282d !important;
+  color: #e8e8ea !important;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.record-table th {
+  background: #1c1d22 !important;
+  color: var(--primary) !important;
+  font-family: var(--mono) !important;
+  font-weight: normal !important;
+}
+
+.record-table .rec-num,
+.record-table .rec-angle-parts,
+.record-table .rec-dist,
+.record-table .rec-distmean {
+  font-family: var(--mono) !important;
+  color: #ffffff !important;
+}
+
+.record-table .rec-dir {
+  color: var(--primary) !important;
+}
+
+.record-table .rec-station,
+.record-table .rec-round {
+  color: var(--gold) !important;
+}
+
+.record-table .rec-target,
+.record-table .rec-face {
+  color: #c3c6cc !important;
+}
+
+/* ---------- 弹出层 / 历史 ---------- */
+.sheet {
+  background: #202126 !important;
+  border: 2px solid #000 !important;
+  outline: 2px solid #4a4c52;
+  box-shadow: none !important;
+}
+
+.sheet-head {
+  border-bottom: 2px solid #000;
+  box-shadow: inset 0 -2px 0 #0b0c0e;
+}
+
+.sheet-body,
+.sheet-body p {
+  color: #c3c6cc;
+}
+
+.sheet-body h3 {
+  color: var(--primary) !important;
+  font-family: var(--mono) !important;
+}
+
+.history-item {
+  border-bottom: 2px solid #0b0c0e;
+  background: transparent;
+}
+
+.history-item:active {
+  background: #2f3136 !important;
+}
+
+.hi-top b,
+.hi-angle {
+  color: var(--primary) !important;
+  font-family: var(--mono) !important;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.history-search::placeholder,
+.field input::placeholder {
+  color: #6f7178;
+}
+
+.history-empty {
+  color: var(--muted) !important;
+}
+
+/* ---------- 提示 ---------- */
+.toast {
+  background: #0b0c0e !important;
+  border: 2px solid var(--primary) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  font-family: var(--mono) !important;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.inline-tip {
+  color: var(--muted) !important;
+}
+
+.inline-tip .dot {
+  background: var(--primary);
+  border-radius: 0;
+  width: 8px;
+  height: 8px;
+}
+
+/* 滚动条：方块 */
+* {
+  scrollbar-color: #5a5c63 #1c1d22;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1c1d22;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #5a5c63;
+  border: 2px solid #0b0c0e;
+}
+
+/* 图标保持像素 */
+img {
+  image-rendering: pixelated;
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000 !important;
+  }
+  .record-table th,
+  .record-table td {
+    background: #ffffff !important;
+    color: #000 !important;
+    text-shadow: none;
+  }
+  .record-title,
+  .record-sub,
+  .record-formula {
+    color: #000 !important;
+    text-shadow: none;
+  }
+}
