@@ -1,6 +1,6 @@
 {
   "name": "total-station-guide",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "全站仪作业引导：设站、后视、盘左、盘右，边操作边计算半测回、2C、各测回平均和限差检核。",
   "license": "MIT",
   "repository": {
