@@ -38,7 +38,6 @@ async function loadDemo(page) {
   await page.waitForTimeout(2100);
 }
 
-/** 用示例数据裁剪出某个阶段的真实状态 */
 async function showStage(page, mode) {
   await loadDemo(page);
   await page.evaluate((stage) => {
@@ -72,6 +71,20 @@ async function showStage(page, mode) {
   await page.waitForTimeout(300);
 }
 
+async function seedHistory(page) {
+  await page.evaluate(() => {
+    const state = JSON.parse(localStorage.getItem('tsguide.v2'));
+    const record = {
+      id: 'demo-record',
+      savedAt: Date.now(),
+      station: state.station,
+      roundCount: state.roundCount,
+      rounds: state.rounds,
+    };
+    localStorage.setItem('tsguide.history.v1', JSON.stringify([record]));
+  });
+}
+
 /* ---------- 手机亮色 ---------- */
 {
   const { context, page } = await freshPage();
@@ -91,6 +104,26 @@ async function showStage(page, mode) {
 
   await showStage(page, 'result');
   await page.screenshot({ path: `${OUT}/guide-05-summary.png` });
+
+  await page.click('#btn-table');
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `${OUT}/guide-06-table-mobile.png` });
+
+  await seedHistory(page);
+  await page.click('#btn-history');
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `${OUT}/guide-07-history.png` });
+  await page.close();
+  await context.close();
+}
+
+/* ---------- 表格全宽 ---------- */
+{
+  const { context, page } = await freshPage({ width: 900, height: 1100, mobile: false });
+  await showStage(page, 'result');
+  await page.click('#btn-table');
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `${OUT}/guide-08-table.png`, fullPage: true });
   await page.close();
   await context.close();
 }
@@ -99,7 +132,7 @@ async function showStage(page, mode) {
 {
   const { context, page } = await freshPage({ dark: true });
   await showStage(page, 'result');
-  await page.screenshot({ path: `${OUT}/guide-06-dark-summary.png` });
+  await page.screenshot({ path: `${OUT}/guide-09-dark-summary.png` });
   await page.close();
   await context.close();
 }
@@ -107,9 +140,9 @@ async function showStage(page, mode) {
 /* ---------- 桌面 ---------- */
 {
   const { context, page } = await freshPage({ width: 1280, height: 900, mobile: false });
-  await page.screenshot({ path: `${OUT}/guide-07-desktop-setup.png` });
+  await page.screenshot({ path: `${OUT}/guide-10-desktop-setup.png` });
   await showStage(page, 'result');
-  await page.screenshot({ path: `${OUT}/guide-08-desktop-summary.png` });
+  await page.screenshot({ path: `${OUT}/guide-11-desktop-summary.png` });
   await page.close();
   await context.close();
 }
