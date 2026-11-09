@@ -1,6 +1,6 @@
 /**
  * app.js —— 全站仪作业引导（测回法）
- * 设站 → 盘左 → 盘右 → 成果；边输入边算半测回、2C、限差。
+ * 设站 → 每测回盘左 → 同测回盘右 → 置盘 → 下一测回 → 成果。
  */
 import {
   dmsPartsToSeconds,
@@ -12,20 +12,18 @@ import {
   formatSignedDelta,
   angleSeparationSec,
   spreadAngles,
-  spread,
   formatMeters,
   parseDistance,
   distanceStats,
 } from './calc.js';
 
-const STORE_KEY = 'tsguide.v1';
-const VERSION = 1;
-const STEPS = [1, 2, 3, 4];
+const STORE_KEY = 'tsguide.v2';
+const VERSION = 2;
 const LIMITS = {
   DJ6: { half: 40, sets: 24, twoC: null },
   DJ2: { half: 20, sets: 12, twoC: 13 },
 };
-const STEP_NEXT_LABEL = { 1: '开始盘左', 2: '进入盘右', 3: '查看成果' };
+const PHASES = ['setup', 'left', 'right', 'circle', 'result'];
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -50,7 +48,9 @@ function defaultStation() {
 function defaultState() {
   return {
     version: VERSION,
-    step: 1,
+    phase: 'setup',
+    roundIndex: 0,
+    roundCount: 2,
     station: defaultStation(),
     rounds: [createRound(), createRound()],
   };
@@ -67,20 +67,28 @@ function normalizeReading(raw) {
 
 function normalizeState(raw) {
   if (!raw || raw.version !== VERSION || !Array.isArray(raw.rounds)) return defaultState();
-  const rounds = raw.rounds.map((round) => ({
-    left: {
-      a: normalizeReading(round?.left?.a),
-      b: normalizeReading(round?.left?.b),
-    },
-    right: {
-      a: normalizeReading(round?.right?.a),
-      b: normalizeReading(round?.right?.b),
-    },
-  }));
-  if (!rounds.length) return defaultState();
+  const count = Math.min(4, Math.max(1, Number(raw.roundCount) || raw.rounds.length || 2));
+  const rounds = [];
+  for (let i = 0; i < count; i += 1) {
+    const round = raw.rounds[i];
+    rounds.push({
+      left: {
+        a: normalizeReading(round?.left?.a),
+        b: normalizeReading(round?.left?.b),
+      },
+      right: {
+        a: normalizeReading(round?.right?.a),
+        b: normalizeReading(round?.right?.b),
+      },
+    });
+  }
+  const phase = PHASES.includes(raw.phase) ? raw.phase : 'setup';
+  const roundIndex = Math.min(count - 1, Math.max(0, Number(raw.roundIndex) || 0));
   return {
     version: VERSION,
-    step: STEPS.includes(Number(raw.step)) ? Number(raw.step) : 1,
+    phase,
+    roundIndex,
+    roundCount: count,
     station: {
       name: String(raw?.station?.name ?? defaultStation().name),
       ih: String(raw?.station?.ih ?? defaultStation().ih),
@@ -101,7 +109,6 @@ function loadState() {
 }
 
 let state = loadState();
-let step = state.step;
 let active = null;
 let keypadVisible = false;
 let saveTimer = null;
@@ -110,7 +117,7 @@ function save() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     try {
-      localStorage.setItem(STORE_KEY, JSON.stringify({ ...state, step }));
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
     } catch {
       /* ignore */
     }
@@ -134,38 +141,40 @@ function reading(d, m, s, dist) {
 }
 
 function currentFace() {
-  if (step === 2) return 'left';
-  if (step === 3) return 'right';
+  if (state.phase === 'left') return 'left';
+  if (state.phase === 'right') return 'right';
   return null;
+}
+
+function currentRound() {
+  return state.rounds[state.roundIndex];
 }
 
 function readingValid(item) {
   return dmsPartsToSeconds(item) !== null;
 }
 
-function sideComplete(side) {
-  return state.rounds.every(
-    (round) => readingValid(round[side].a) && readingValid(round[side].b),
-  );
+function faceComplete(face, roundIndex = state.roundIndex) {
+  const round = state.rounds[roundIndex];
+  return Boolean(round) && readingValid(round[face].a) && readingValid(round[face].b);
 }
 
-function leftComplete() {
-  return sideComplete('left');
-}
-
-function rightComplete() {
-  return sideComplete('right');
-}
-
-function maxAllowedStep() {
-  if (rightComplete()) return 4;
-  if (leftComplete()) return 3;
-  return 2;
+function allComplete() {
+  return state.rounds.every((_, index) => faceComplete('left', index) && faceComplete('right', index));
 }
 
 function setupValid() {
   const ih = Number(state.station.ih);
   return Boolean(state.station.name.trim()) && Number.isFinite(ih) && ih > 0;
+}
+
+function startReading(roundIndex, count = state.roundCount) {
+  return (roundIndex * 180) / count;
+}
+
+function formatStartReading(roundIndex, count = state.roundCount) {
+  const deg = startReading(roundIndex, count);
+  return `${Number.isInteger(deg) ? deg : deg.toFixed(1)}°00′00″`;
 }
 
 /* ---------------- 计算 ---------------- */
@@ -199,11 +208,8 @@ function computeSummary() {
   const halfDiffs = calcs
     .map((item) => (item.l != null && item.r != null ? angleSeparationSec(item.l, item.r) : null))
     .filter((v) => v != null);
-  const twos = calcs.flatMap((item) => [item.cA, item.cB]).filter((v) => v != null);
   const twoSpreads = calcs
-    .map((item) =>
-      item.cA != null && item.cB != null ? Math.abs(item.cA - item.cB) : null,
-    )
+    .map((item) => (item.cA != null && item.cB != null ? Math.abs(item.cA - item.cB) : null))
     .filter((v) => v != null);
   const limits = LIMITS[state.station.instrument];
 
@@ -213,7 +219,6 @@ function computeSummary() {
     halfDiff: halfDiffs.length ? Math.max(...halfDiffs) : null,
     setsDiff: spreadAngles(ones),
     twoCSpread: twoSpreads.length ? Math.max(...twoSpreads) : null,
-    twoCValues: twos,
     limits,
     distA: targetDistance('a'),
     distB: targetDistance('b'),
@@ -225,14 +230,13 @@ function computeSummary() {
 function getSlots() {
   const face = currentFace();
   if (!face) return [];
+  const roundIndex = state.roundIndex;
   const slots = [];
-  state.rounds.forEach((round, roundIndex) => {
-    ['a', 'b'].forEach((target) => {
-      ['d', 'm', 's'].forEach((part) => {
-        slots.push({ kind: 'angle', roundIndex, face, target, part });
-      });
-      slots.push({ kind: 'dist', roundIndex, face, target });
+  ['a', 'b'].forEach((target) => {
+    ['d', 'm', 's'].forEach((part) => {
+      slots.push({ kind: 'angle', roundIndex, face, target, part });
     });
+    slots.push({ kind: 'dist', roundIndex, face, target });
   });
   return slots;
 }
@@ -240,12 +244,7 @@ function getSlots() {
 function sameSlot(a, b) {
   if (!a || !b || a.kind !== b.kind) return false;
   if (a.kind === 'angle') {
-    return (
-      a.roundIndex === b.roundIndex &&
-      a.face === b.face &&
-      a.target === b.target &&
-      a.part === b.part
-    );
+    return a.roundIndex === b.roundIndex && a.face === b.face && a.target === b.target && a.part === b.part;
   }
   return a.roundIndex === b.roundIndex && a.face === b.face && a.target === b.target;
 }
@@ -276,11 +275,8 @@ function nextSlot(slot) {
 
 function activeElement() {
   if (!active) return null;
-  const panel = `#step-${step}`;
-  const row = `${panel} .round[data-index="${active.roundIndex}"] .read-row[data-target="${active.target}"]`;
-  if (active.kind === 'angle') {
-    return $(`${row} .cell[data-part="${active.part}"]`);
-  }
+  const row = `#face-round .read-row[data-target="${active.target}"]`;
+  if (active.kind === 'angle') return $(`${row} .cell[data-part="${active.part}"]`);
   return $(`${row} .dist-cell`);
 }
 
@@ -363,17 +359,19 @@ function cellText(part, value) {
   return value;
 }
 
-function updateFaceExtras(face, roundIndex) {
-  const roundEl = $(`#step-${step} .round[data-index="${roundIndex}"]`);
+function updateFaceExtras() {
+  const roundEl = $('#face-round .round');
   if (!roundEl) return;
-  const round = state.rounds[roundIndex];
+  const round = currentRound();
+  const face = currentFace();
+  if (!face) return;
   const half = angleFromReadings(round[face].a, round[face].b);
   const angleEl = roundEl.querySelector('.round-angle');
   if (angleEl) angleEl.textContent = half != null ? formatAngle(half) : '';
 
   const twoEl = roundEl.querySelector('.round-2c');
   if (!twoEl) return;
-  if (step === 3) {
+  if (face === 'right') {
     const cA = twoCSeconds(round.left.a, round.right.a);
     const cB = twoCSeconds(round.left.b, round.right.b);
     const parts = [];
@@ -391,8 +389,8 @@ function updateFaceExtras(face, roundIndex) {
 }
 
 function refreshReading(roundIndex, face, target) {
-  const roundEl = $(`#step-${step} .round[data-index="${roundIndex}"]`);
-  if (!roundEl) return;
+  const roundEl = $('#face-round .round');
+  if (!roundEl || roundIndex !== state.roundIndex || face !== currentFace()) return;
   const item = state.rounds[roundIndex][face][target];
   const row = roundEl.querySelector(`.read-row[data-target="${target}"]`);
   if (!row) return;
@@ -406,12 +404,11 @@ function refreshReading(roundIndex, face, target) {
   });
   const distEl = row.querySelector('.dist-val');
   if (distEl) distEl.textContent = item.dist;
-  row
-    .querySelector('.dist-cell')
-    ?.classList.toggle('invalid', Boolean(item.dist) && parseDistance(item.dist) == null);
+  row.querySelector('.dist-cell')?.classList.toggle('invalid', Boolean(item.dist) && parseDistance(item.dist) == null);
 
-  updateFaceExtras(face, roundIndex);
-  updateProgress();
+  updateFaceExtras();
+  updateFaceProgress();
+  updateFlow();
   renderSummary();
   save();
 }
@@ -429,12 +426,10 @@ function handleAngleKey(key) {
     selectSlot(active);
     return;
   }
-
   if (key === 'next') {
     advance();
     return;
   }
-
   if (key === 'back') {
     if (item[active.part]) {
       item[active.part] = item[active.part].slice(0, -1);
@@ -445,7 +440,6 @@ function handleAngleKey(key) {
     }
     return;
   }
-
   if (key === 'dot') return;
   if (!/^\d$/.test(key) && key !== '00') return;
 
@@ -470,7 +464,7 @@ function validDistanceText(value) {
 function handleDistKey(key) {
   if (!active || active.kind !== 'dist') return;
   const item = state.rounds[active.roundIndex][active.face][active.target];
-  let value = String(item.dist ?? '');
+  const value = String(item.dist ?? '');
 
   if (key === 'clear') {
     item.dist = '';
@@ -508,8 +502,6 @@ function handleDistKey(key) {
     refreshReading(active.roundIndex, active.face, active.target);
   }
 }
-
-/* ---------------- 键盘总入口 ---------------- */
 
 function handleKey(key) {
   if (key === 'done') {
@@ -558,7 +550,7 @@ function bindKeypad() {
   });
 }
 
-/* ---------------- 渲染：测回 ---------------- */
+/* ---------------- 渲染 ---------------- */
 
 const roundTpl = $('#tpl-round');
 
@@ -568,19 +560,6 @@ function buildRound(face, round, index) {
   node.querySelector('.round-no').textContent = `测回 ${index + 1}`;
   const half = angleFromReadings(round[face].a, round[face].b);
   node.querySelector('.round-angle').textContent = half != null ? formatAngle(half) : '';
-
-  node.querySelector('.btn-del').addEventListener('click', () => {
-    if (state.rounds.length <= 1) state.rounds[0] = createRound();
-    else state.rounds.splice(index, 1);
-    active = null;
-    renderFaces();
-    save();
-    if (keypadVisible) {
-      const first = firstIncompleteSlot();
-      if (first) selectSlot(first);
-      else closeKeypad();
-    }
-  });
 
   ['a', 'b'].forEach((target) => {
     const row = node.querySelector(`.read-row[data-target="${target}"]`);
@@ -613,40 +592,101 @@ function buildRound(face, round, index) {
       twoEl.textContent = `2C  ${parts.join('   ')}`;
     }
   }
-
   return node;
 }
 
-function renderFace(face) {
-  const list = $(`.round-list[data-face="${face}"]`);
-  if (!list) return;
-  list.replaceChildren(...state.rounds.map((round, index) => buildRound(face, round, index)));
+function updateFaceProgress() {
+  const face = currentFace();
+  if (!face) return;
+  const round = currentRound();
+  let done = 0;
+  if (readingValid(round[face].a)) done += 1;
+  if (readingValid(round[face].b)) done += 1;
+  $('#face-progress').textContent = `${done} / 2`;
 }
 
-function renderFaces() {
-  renderFace('left');
-  renderFace('right');
-  updateProgress();
-  renderSummary();
-}
-
-function faceProgress(face) {
+function updateFlow() {
+  const total = state.roundCount * 2;
   let done = 0;
   state.rounds.forEach((round) => {
-    if (readingValid(round[face].a)) done += 1;
-    if (readingValid(round[face].b)) done += 1;
+    if (readingValid(round.left.a) && readingValid(round.left.b)) done += 1;
+    if (readingValid(round.right.a) && readingValid(round.right.b)) done += 1;
   });
-  return { done, total: state.rounds.length * 2 };
+
+  $('#flow-count').textContent = `${done} / ${total} 面`;
+  $('#flow-fill').style.width = `${total ? (done / total) * 100 : 0}%`;
+
+  if (state.phase === 'setup') {
+    $('#flow-title').textContent = '设站';
+  } else if (state.phase === 'left' || state.phase === 'right') {
+    $('#flow-title').textContent = `第 ${state.roundIndex + 1} / ${state.roundCount} 测回 · ${state.phase === 'left' ? '盘左' : '盘右'}`;
+  } else if (state.phase === 'circle') {
+    $('#flow-title').textContent = `置盘 · 准备第 ${state.roundIndex + 1} 测回`;
+  } else {
+    $('#flow-title').textContent = '成果';
+  }
 }
 
-function updateProgress() {
-  const left = faceProgress('left');
-  const right = faceProgress('right');
-  $('#left-progress').textContent = `${left.done} / ${left.total}`;
-  $('#right-progress').textContent = `${right.done} / ${right.total}`;
+function renderFaceGuide() {
+  const face = currentFace();
+  if (!face) return;
+  const roundIndex = state.roundIndex;
+  const isLeft = face === 'left';
+  const start = formatStartReading(roundIndex);
+  const title = isLeft ? '盘左（正镜）观测' : '盘右（倒镜）观测';
+  $('#face-kicker').textContent = `第 ${roundIndex + 1} / ${state.roundCount} 测回 · ${isLeft ? '盘左' : '盘右'}`;
+  $('#face-guide-title').textContent = title;
+
+  const list = $('#face-guide-list');
+  list.replaceChildren();
+  const items = isLeft
+    ? [
+        roundIndex === 0
+          ? `第 1 测回盘左：照准目标 A，把水平度盘配置到约 0°00′00″（略大于 0°）。`
+          : `第 ${roundIndex + 1} 测回盘左：本测回已在置盘页配置到约 ${start}。`,
+        '照准目标 A，读水平度盘并测距；顺时针照准目标 B，读数、测距。',
+        '程序自动算半测回角值；完成后倒镜，测同一测回的盘右。',
+      ]
+    : [
+        '倒镜到盘右，先照准目标 B，再照准目标 A（与盘左顺序相反）。',
+        '每个目标读水平度盘并测距；程序自动算半测回和 2C。',
+        '2C 或半测回互差超限时，先检查仪器与操作，再重测该测回。',
+      ];
+  items.forEach((text) => {
+    const li = document.createElement('li');
+    li.textContent = text;
+    list.appendChild(li);
+  });
 }
 
-/* ---------------- 渲染：成果 ---------------- */
+function renderFlowPanels() {
+  $('#step-1').hidden = state.phase !== 'setup';
+  $('#step-face').hidden = !['left', 'right'].includes(state.phase);
+  $('#step-circle').hidden = state.phase !== 'circle';
+  $('#step-result').hidden = state.phase !== 'result';
+  updateFlow();
+}
+
+function renderFacePanel() {
+  if (!['left', 'right'].includes(state.phase)) return;
+  const face = currentFace();
+  $('#face-title').textContent = `测回 ${state.roundIndex + 1} · ${face === 'left' ? '盘左' : '盘右'}`;
+  renderFaceGuide();
+  const round = currentRound();
+  const list = $('#face-round');
+  list.replaceChildren(buildRound(face, round, state.roundIndex));
+  updateFaceProgress();
+}
+
+function renderCircle() {
+  if (state.phase !== 'circle') return;
+  const roundIndex = state.roundIndex;
+  const target = formatStartReading(roundIndex);
+  $('#circle-title').textContent = `第 ${roundIndex + 1} 测回前配置水平度盘`;
+  $('#circle-label').textContent = `第 ${roundIndex + 1} 测回起始读数`;
+  $('#circle-target').textContent = target;
+  $('#circle-hint').textContent = `${state.roundCount} 个测回按 180°/n 递增；本测回配置到 ${target}，盘左照准目标 A 后读数应略大于该值。`;
+}
 
 function checkBadge(value, limit, neutralLabel) {
   if (value == null) return { text: '待测', cls: 'neutral' };
@@ -698,13 +738,12 @@ function renderSummary() {
   summary.calcs.forEach((item, index) => {
     const row = document.createElement('div');
     row.className = 'result-row';
-    const cells = [
+    [
       `测回 ${index + 1}`,
       item.l != null ? formatAngle(item.l) : '—',
       item.r != null ? formatAngle(item.r) : '—',
       item.one != null ? formatAngle(item.one) : '—',
-    ];
-    cells.forEach((text) => {
+    ].forEach((text) => {
       const span = document.createElement('span');
       span.textContent = text;
       row.appendChild(span);
@@ -758,7 +797,7 @@ function renderSummary() {
 function buildReport(summary) {
   const lines = [];
   lines.push('全站仪测回成果');
-  lines.push(`测站：${state.station.name}    仪器：${state.station.instrument}    仪器高：${state.station.ih} m`);
+  lines.push(`测站：${state.station.name}    仪器：${state.station.instrument}    仪器高：${state.station.ih} m    测回数：${state.roundCount}`);
   if (state.station.bs) lines.push(`后视点：${state.station.bs}`);
   lines.push(`各测回平均：${summary.angle != null ? formatAngle(summary.angle) : '—'}`);
   summary.calcs.forEach((item, index) => {
@@ -778,86 +817,89 @@ function buildReport(summary) {
   return lines.join('\n');
 }
 
-/* ---------------- 步骤 ---------------- */
-
-function renderSteps() {
-  const max = maxAllowedStep();
-  $$('.step').forEach((button) => {
-    const value = Number(button.dataset.step);
-    button.classList.toggle('active', value === step);
-    button.classList.toggle('done', value < step);
-    button.classList.toggle('locked', value > max && value !== 2);
-  });
-}
+/* ---------------- 导航 ---------------- */
 
 function renderNav() {
   const prev = $('#btn-prev');
   const next = $('#btn-next');
   const bar = $('#wizard-actions');
-  bar.hidden = step === 4;
-  prev.hidden = step === 1;
-  if (step === 4) {
-    next.hidden = true;
-    prev.textContent = '返回盘右';
-  } else {
-    next.hidden = false;
-    prev.textContent = '上一步';
-    next.textContent = STEP_NEXT_LABEL[step];
+  bar.hidden = state.phase === 'result';
+
+  prev.hidden = state.phase === 'setup';
+  prev.textContent = '上一步';
+  next.hidden = state.phase === 'result';
+
+  if (state.phase === 'setup') next.textContent = '开始第 1 测回';
+  else if (state.phase === 'left') next.textContent = '盘左完成，倒镜盘右';
+  else if (state.phase === 'right') {
+    next.textContent = state.roundIndex + 1 < state.roundCount ? '完成本测回，准备置盘' : '查看成果';
+  } else if (state.phase === 'circle') {
+    next.textContent = `置盘完成，开始第 ${state.roundIndex + 1} 测回`;
   }
 }
 
-function setStep(nextStep) {
-  if (!STEPS.includes(nextStep)) return;
-  if (nextStep > maxAllowedStep()) {
-    if (nextStep === 3) toast('先把盘左读数输完');
-    else toast('先把盘右读数输完');
-    return;
-  }
-  closeKeypad();
-  step = nextStep;
-  state.step = step;
-  renderSteps();
-  $$('.step-panel').forEach((panel) => {
-    panel.hidden = panel.id !== `step-${step}`;
-  });
+function renderAll() {
+  renderFlowPanels();
+  renderFacePanel();
+  renderCircle();
+  renderSummary();
   renderNav();
-  if (step === 2 || step === 3) {
-    active = null;
-    syncActive();
-  }
+}
+
+function goPhase(phase, roundIndex = state.roundIndex) {
+  closeKeypad();
+  state.phase = phase;
+  state.roundIndex = roundIndex;
+  renderAll();
   window.scrollTo({ top: 0, behavior: 'smooth' });
   save();
 }
 
 function handleNext() {
-  if (step === 1) {
+  if (state.phase === 'setup') {
     if (!setupValid()) {
       toast('请填测站名称和有效仪器高');
       $('#station-name').focus();
       return;
     }
-    setStep(2);
+    goPhase('left', 0);
     return;
   }
-  if (step === 2) {
-    if (!leftComplete()) {
-      toast('盘左还有读数没输完');
+  if (state.phase === 'left') {
+    if (!faceComplete('left')) {
+      toast('本测回盘左还有读数没输完');
       return;
     }
-    setStep(3);
+    goPhase('right', state.roundIndex);
     return;
   }
-  if (step === 3) {
-    if (!rightComplete()) {
-      toast('盘右还有读数没输完');
+  if (state.phase === 'right') {
+    if (!faceComplete('right')) {
+      toast('本测回盘右还有读数没输完');
       return;
     }
-    setStep(4);
+    if (state.roundIndex + 1 < state.roundCount) {
+      goPhase('circle', state.roundIndex + 1);
+    } else {
+      goPhase('result', state.roundIndex);
+    }
+    return;
+  }
+  if (state.phase === 'circle') {
+    goPhase('left', state.roundIndex);
   }
 }
 
 function handlePrev() {
-  if (step > 1) setStep(step - 1);
+  if (state.phase === 'left') {
+    goPhase(state.roundIndex === 0 ? 'setup' : 'circle', state.roundIndex);
+  } else if (state.phase === 'right') {
+    goPhase('left', state.roundIndex);
+  } else if (state.phase === 'circle') {
+    goPhase('right', state.roundIndex - 1);
+  } else if (state.phase === 'result') {
+    goPhase('right', state.roundCount - 1);
+  }
 }
 
 /* ---------------- 动作 ---------------- */
@@ -865,7 +907,9 @@ function handlePrev() {
 function demoState() {
   return {
     version: VERSION,
-    step: 4,
+    phase: 'result',
+    roundIndex: 1,
+    roundCount: 2,
     station: { name: 'GCP2', ih: '1.500', instrument: 'DJ6', bs: 'GCP1' },
     rounds: [
       {
@@ -894,22 +938,17 @@ function hasData() {
 function loadDemo() {
   if (hasData() && !confirm('载入示例会覆盖当前数据，继续？')) return;
   state = demoState();
-  step = 4;
-  closeKeypad();
   syncSetupInputs();
-  renderFaces();
-  setStep(4);
+  renderAll();
   save();
   toast('已载入示例');
 }
 
 function newStation() {
   state = defaultState();
-  step = 1;
   closeKeypad();
   syncSetupInputs();
-  renderFaces();
-  setStep(1);
+  renderAll();
   save();
   toast('已新建测站');
   window.scrollTo({ top: 0 });
@@ -947,7 +986,19 @@ function syncSetupInputs() {
   $('#station-name').value = state.station.name;
   $('#station-ih').value = state.station.ih;
   $('#instrument').value = state.station.instrument;
+  $('#round-count').value = String(state.roundCount);
   $('#station-bs').value = state.station.bs;
+}
+
+function setRoundCount(count) {
+  const next = Math.min(4, Math.max(1, count));
+  while (state.rounds.length < next) state.rounds.push(createRound());
+  if (state.rounds.length > next) state.rounds = state.rounds.slice(0, next);
+  state.roundCount = next;
+  state.roundIndex = 0;
+  state.phase = 'setup';
+  renderAll();
+  save();
 }
 
 function bindSetup() {
@@ -968,35 +1019,25 @@ function bindSetup() {
     state.station.bs = event.target.value;
     save();
   });
+  $('#round-count').addEventListener('change', (event) => {
+    const count = Number(event.target.value);
+    if (hasData() && !confirm(`改为 ${count} 个测回会调整已有数据，继续？`)) {
+      event.target.value = String(state.roundCount);
+      return;
+    }
+    setRoundCount(count);
+  });
 }
 
 /* ---------------- 静态事件 ---------------- */
 
 function bindStatic() {
-  $$('.step').forEach((button) => {
-    button.addEventListener('click', () => setStep(Number(button.dataset.step)));
-  });
-  $$('[data-add]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const face = button.dataset.add;
-      state.rounds.push(createRound());
-      renderFaces();
-      save();
-      activateSlot({
-        kind: 'angle',
-        roundIndex: state.rounds.length - 1,
-        face,
-        target: 'a',
-        part: 'd',
-      });
-    });
-  });
-
   $('#btn-next').addEventListener('click', handleNext);
   $('#btn-prev').addEventListener('click', handlePrev);
   $('#btn-demo').addEventListener('click', loadDemo);
   $('#btn-copy').addEventListener('click', copyReport);
   $('#btn-new-station').addEventListener('click', newStation);
+  $('#btn-result-back').addEventListener('click', handlePrev);
 
   $('#btn-help').addEventListener('click', () => {
     $('#help-sheet').hidden = false;
@@ -1034,11 +1075,16 @@ function registerSW() {
 function init() {
   bindStatic();
   syncSetupInputs();
-  renderFaces();
-  step = Math.min(Math.max(step, 1), Math.max(maxAllowedStep(), 1));
-  // 已完成的成果页直接保留；无数据则回到设站
-  if (step === 4 && !rightComplete()) step = leftComplete() ? 3 : 2;
-  setStep(step);
+  // 刷新时如果还没测完却停在成果页，退回最后一个盘右
+  if (state.phase === 'result' && !allComplete()) {
+    state.roundIndex = state.roundCount - 1;
+    state.phase = faceComplete('right', state.roundIndex) ? 'result' : 'right';
+  }
+  if (state.phase === 'circle' && state.roundIndex < 1) {
+    state.phase = 'left';
+    state.roundIndex = 0;
+  }
+  renderAll();
   registerSW();
 }
 
