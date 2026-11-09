@@ -186,12 +186,20 @@ await page.click('#btn-table');
 await page.waitForTimeout(250);
 check('记录表页标题', (await page.textContent('#flow-title')) === '测回记录表');
 check('记录表标题', (await page.textContent('#record-table .record-title')) === '测回法水平角观测记录');
-check('记录表 8 行读数', (await page.locator('#record-table tbody tr').count()) === 8);
+check('记录表 8 行读数', (await page.locator('#record-table .record-table tbody tr').count()) === 8);
 check(
   '记录表列头',
   (await page.textContent('#record-table thead')).includes('水平度盘读数') &&
     (await page.textContent('#record-table thead')).includes('半测回角值') &&
-    (await page.textContent('#record-table thead')).includes('一测回平均角值'),
+    (await page.textContent('#record-table thead')).includes('一测回平均角值') &&
+    (await page.textContent('#record-table thead')).includes('各测回平均角值'),
+);
+check('记录表测站写成测站', (await page.textContent('#record-table .rec-station')) === '测站');
+check('记录表有水平距离表', (await page.textContent('#record-table .distance-title')) === '水平距离');
+check(
+  '水平距离方向与均值',
+  (await page.textContent('#record-table .distance-table')).includes('59.230') &&
+    (await page.textContent('#record-table .distance-table')).includes('114.552'),
 );
 const tableText = await page.textContent('#record-table');
 check(
@@ -265,6 +273,9 @@ await page.waitForTimeout(250);
 check('新建测站回到设站', (await page.textContent('#flow-title')) === '设站');
 check('新建测站清空键盘', !(await page.isVisible('#keypad')));
 check('新建测站默认 2 测回', (await page.inputValue('#round-count')) === '2');
+check('上一站前视变新测站', (await page.inputValue('#station-name')) === 'GCP3');
+check('上一站测站变新后视', (await page.inputValue('#station-bs')) === 'GCP2');
+check('新前视留空待填', (await page.inputValue('#station-fs')) === '');
 await page.click('#btn-next');
 await page.waitForTimeout(200);
 const cleared = await page.evaluate(() =>
