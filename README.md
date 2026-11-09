@@ -1,6 +1,6 @@
 # 全站仪作业引导 · 测回法
 
-手机端 PWA：按现场顺序引导你完成 **设站 → 盘左 → 盘右 → 成果**，边输入读数边自动计算半测回角值、2C、一测回角值、各测回平均和限差。它是原「测回计算器」之外的新项目，原简单计算器保持不动。
+手机端 PWA：按现场顺序引导你完成 **设站 → 第 1 测回盘左 → 同测回盘右 → 置盘 → 第 2 测回 → 成果**，边输入读数边自动计算半测回角值、2C、一测回角值、各测回平均和限差。它是原「测回计算器」之外的新项目，原简单计算器保持不动。
 
 [![tests](https://github.com/Prqingyu/total-station-guide/actions/workflows/test.yml/badge.svg)](https://github.com/Prqingyu/total-station-guide/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -10,20 +10,33 @@
 原简单计算器：<https://prqingyu.github.io/total-station-calc/>（未覆盖）
 
 <p>
-  <img src="docs/setup.png" width="24%" alt="设站引导" />
-  <img src="docs/left.png" width="24%" alt="盘左观测" />
-  <img src="docs/right.png" width="24%" alt="盘右观测与2C" />
-  <img src="docs/summary.png" width="24%" alt="成果与限差" />
+  <img src="docs/setup.png" width="19%" alt="设站引导" />
+  <img src="docs/left.png" width="19%" alt="盘左" />
+  <img src="docs/right.png" width="19%" alt="同测回盘右与2C" />
+  <img src="docs/circle.png" width="19%" alt="置盘" />
+  <img src="docs/summary.png" width="19%" alt="成果与限差" />
 </p>
 
 ## 引导流程
 
-1. **设站**：架设、对中（≤1–2 mm）、整平、量仪器高、开机检查；输入测站名称、仪器高、仪器类型和后视点。
-2. **盘左**：照准目标 A → 读水平度盘、测距；照准目标 B → 读数、测距。自动算半测回角值。
-3. **盘右**：倒镜，先 B 后 A；自动算半测回角值和 2C 值，超限提示重测。
-4. **成果**：各测回平均角、各测回角值、2C 值、水平距离、限差检核、成果记录；可复制成果或新建测站。
+一个测回 = **一个盘左半测回 + 一个盘右半测回**，不能连着测两个盘左；每测回结束后再置盘，进入下一测回。
 
-默认 2 个测回，可增删。所有读数用底部数字键盘输入：度按 `→` 到分，分/秒满两位自动跳，秒满后自动进入距离框，距离后按 `→` 下一条。
+1. **设站**：架设、对中（≤1–2 mm）、整平、量仪器高、开机检查；输入测站名称、仪器高、仪器类型、**测回数（1–4，默认 2）**和后视点。
+2. **第 1 测回盘左**：照准目标 A，把水平度盘配置到约 0°00′00″；读 A、B 水平角和距离，自动算半测回角值。
+3. **同测回盘右**：倒镜，先 B 后 A；读数、测距，自动算半测回和 2C。
+4. **置盘**：第 2 测回开始前，盘左照准 A，把水平度盘配置到约 **90°00′00″**（n 个测回按 180°/n 递增）。
+5. **第 2 测回**：再按盘左 → 盘右测一个完整测回。
+6. **成果**：各测回平均角、各测回角值、2C 值、水平距离、限差检核、成果记录；可复制成果或新建测站。
+
+## 置盘规则
+
+| 测回数 | 各测回盘左起始读数 |
+| --- | --- |
+| 2 | 0°、90° |
+| 3 | 0°、60°、120° |
+| 4 | 0°、45°、90°、135° |
+
+不同测回间配置度盘，是为了减小度盘刻划误差；盘右观测已经用到度盘的另一半，所以按 180°/n 递增，而不是 360°/n。
 
 ## 自动计算
 
@@ -53,6 +66,7 @@
 - [中国矿业大学 竖直角与指标差实验](https://labch.cumt.edu.cn/_upload/article/files/f5/24/d1cf03c04137a3cbb58f82d47e81/aac73c8e-556b-43c7-af02-0c1f28013915.pdf)
 - [拓普康全站仪操作手册](https://topconchina.cn/upload/newsfile/202010/1602160664jh8bagfb.pdf)
 - [全站仪操作步骤（天津达光）](http://www.tjdgch.com/hangye/122.html)
+- 课程讲义《角度测量》（Chapter4_2，测回法与 180°/n 配度盘）
 
 ## 安装与离线
 
@@ -67,7 +81,7 @@
 npm install
 npm test             # 计算核心单元测试（含 2C）
 npm run serve        # http://127.0.0.1:8788/
-node tests/e2e.mjs   # 无头 Edge 端到端测试（46 项）
+node tests/e2e.mjs   # 无头 Edge 端到端测试（56 项）
 node tests/pwa.mjs   # 线上 PWA / 离线测试
 node tools/screenshots.mjs
 ```
