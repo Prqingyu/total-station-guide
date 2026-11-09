@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <title>全站仪作业引导</title>
+  <meta name="description" content="全站仪测回法引导：设站、后视、盘左、盘右，边操作边自动计算半测回、2C、各测回平均和限差检核。" />
+  <meta name="theme-color" content="#123b6d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="全站仪引导" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="topbar">
+      <header class="app-header">
+        <div class="brand">
+          <img class="brand-mark" src="icons/icon-64.png" alt="" width="36" height="36" />
+          <div>
+            <h1>全站仪作业引导</h1>
+            <p class="brand-sub">测回法 · 边操作边计算</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button type="button" class="chip" id="btn-demo">示例</button>
+          <button type="button" class="icon-btn" id="btn-help" aria-label="说明">?</button>
+        </div>
+      </header>
+      <ol class="steps" id="steps">
+        <li><button type="button" class="step active" data-step="1"><i>1</i><span>设站</span></button></li>
+        <li><button type="button" class="step" data-step="2"><i>2</i><span>盘左</span></button></li>
+        <li><button type="button" class="step" data-step="3"><i>3</i><span>盘右</span></button></li>
+        <li><button type="button" class="step" data-step="4"><i>4</i><span>成果</span></button></li>
+      </ol>
+    </div>
+
+    <main class="main" id="main">
+      <!-- 1 设站 -->
+      <section class="step-panel" id="step-1">
+        <div class="guide card">
+          <div class="guide-kicker">现场操作 1 / 4</div>
+          <h2>架设、对中整平、设站</h2>
+          <ol class="guide-list">
+            <li>架头大致水平、三脚架踩实；仪器轻放，立即拧紧连接螺旋。</li>
+            <li>用光学或激光对中器对准测站点，偏差控制在 1–2 mm；先圆气泡粗平，再管气泡精平。</li>
+            <li>量仪器高并记录；开机检查电量、棱镜常数、温度气压改正和倾斜补偿。</li>
+            <li>输入测站与后视点；照准后视方向，在仪器里配置后视度盘。</li>
+            <li>后视定向完成后，再进入盘左观测。</li>
+          </ol>
+        </div>
+
+        <div class="card form-card">
+          <h3>测站数据</h3>
+          <div class="form-grid">
+            <label class="field">
+              <span>测站名称</span>
+              <input id="station-name" type="text" autocomplete="off" placeholder="如 GCP2" />
+            </label>
+            <label class="field">
+              <span>仪器高（m）</span>
+              <input id="station-ih" type="number" inputmode="decimal" step="0.001" min="0" placeholder="1.500" />
+            </label>
+            <label class="field">
+              <span>仪器类型</span>
+              <select id="instrument">
+                <option value="DJ6">DJ6</option>
+                <option value="DJ2">DJ2</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>后视点</span>
+              <input id="station-bs" type="text" autocomplete="off" placeholder="如 GCP1" />
+            </label>
+          </div>
+        </div>
+
+        <div class="inline-tip">
+          <span class="dot"></span>
+          <span>后视定向完成后，点“开始盘左”</span>
+        </div>
+      </section>
+
+      <!-- 2 盘左 -->
+      <section class="step-panel" id="step-2" hidden>
+        <div class="guide card">
+          <div class="guide-kicker">现场操作 2 / 4 · 盘左</div>
+          <h2>盘左（正镜）观测</h2>
+          <ol class="guide-list">
+            <li>盘左照准目标 A，读水平度盘，按测距键读水平距离。</li>
+            <li>顺时针照准目标 B，读水平度盘和水平距离。</li>
+            <li>程序自动算半测回角值；完成第 1 测回后倒镜，进入盘右。</li>
+          </ol>
+        </div>
+        <div class="face-head">
+          <h2>盘左观测</h2>
+          <span class="progress-pill" id="left-progress">0 / 4</span>
+        </div>
+        <div class="round-list" data-face="left"></div>
+        <div class="panel-actions">
+          <button type="button" class="add-btn" data-add="left">＋ 测回</button>
+        </div>
+      </section>
+
+      <!-- 3 盘右 -->
+      <section class="step-panel" id="step-3" hidden>
+        <div class="guide card">
+          <div class="guide-kicker">现场操作 3 / 4 · 盘右</div>
+          <h2>盘右（倒镜）观测</h2>
+          <ol class="guide-list">
+            <li>倒镜，盘右先照准目标 B，再照准目标 A（与盘左顺序相反）。</li>
+            <li>每个目标读水平度盘并测距；程序自动算半测回和 2C。</li>
+            <li>2C 或半测回互差超限时，先检查仪器与操作，再重测该测回。</li>
+          </ol>
+        </div>
+        <div class="face-head">
+          <h2>盘右观测</h2>
+          <span class="progress-pill" id="right-progress">0 / 4</span>
+        </div>
+        <div class="round-list" data-face="right"></div>
+        <div class="panel-actions">
+          <button type="button" class="add-btn" data-add="right">＋ 测回</button>
+        </div>
+      </section>
+
+      <!-- 4 成果 -->
+      <section class="step-panel" id="step-4" hidden>
+        <div class="result-card">
+          <div class="result-eyebrow">各测回平均</div>
+          <div class="result-value" id="sum-angle">—</div>
+        </div>
+
+        <div class="card">
+          <h3>限差检核 <span class="instrument-tag" id="instrument-tag">DJ6</span></h3>
+          <div id="checks" class="check-list"></div>
+        </div>
+
+        <div class="card">
+          <h3>各测回角值</h3>
+          <div id="one-sets" class="result-table"></div>
+        </div>
+
+        <div class="card">
+          <h3>2C 值</h3>
+          <div id="two-c" class="result-table"></div>
+        </div>
+
+        <div class="card">
+          <h3>水平距离</h3>
+          <div id="distances" class="result-table"></div>
+        </div>
+
+        <div class="result-actions">
+          <button type="button" class="btn-ghost" id="btn-copy">复制成果</button>
+          <button type="button" class="btn-primary" id="btn-new-station">新建测站</button>
+        </div>
+
+        <div class="card">
+          <h3>成果记录</h3>
+          <pre class="report" id="report"></pre>
+        </div>
+      </section>
+    </main>
+
+    <div class="wizard-actions" id="wizard-actions">
+      <button type="button" class="btn-ghost" id="btn-prev" hidden>上一步</button>
+      <button type="button" class="btn-primary" id="btn-next">开始盘左</button>
+    </div>
+
+    <div class="keypad" id="keypad" hidden>
+      <div class="keypad-top">
+        <span class="keypad-caption" id="keypad-caption"></span>
+        <button type="button" class="keypad-hide" id="keypad-hide">收起</button>
+      </div>
+      <div class="keypad-grid">
+        <button type="button" class="key" data-key="7">7</button>
+        <button type="button" class="key" data-key="8">8</button>
+        <button type="button" class="key" data-key="9">9</button>
+        <button type="button" class="key key-fn" data-key="back">⌫</button>
+        <button type="button" class="key" data-key="4">4</button>
+        <button type="button" class="key" data-key="5">5</button>
+        <button type="button" class="key" data-key="6">6</button>
+        <button type="button" class="key key-fn" data-key="next">→</button>
+        <button type="button" class="key" data-key="1">1</button>
+        <button type="button" class="key" data-key="2">2</button>
+        <button type="button" class="key" data-key="3">3</button>
+        <button type="button" class="key key-fn" data-key="clear">清</button>
+        <button type="button" class="key" data-key="00">00</button>
+        <button type="button" class="key" data-key="0">0</button>
+        <button type="button" class="key" data-key="dot">.</button>
+        <button type="button" class="key key-done" data-key="done">完成</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="sheet-wrap" id="help-sheet" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+      <div class="sheet-head">
+        <h2 id="sheet-title">作业流程与公式</h2>
+        <button type="button" class="icon-btn" id="btn-sheet-close" aria-label="关闭">✕</button>
+      </div>
+      <div class="sheet-body">
+        <h3>流程</h3>
+        <p>架设 → 对中 → 整平 → 开机检查 → 设站（仪器高）→ 后视定向 → 盘左观测 → 盘右观测 → 2C 与限差检核 → 记录成果、搬站。</p>
+        <h3>公式</h3>
+        <p>半测回：β<sub>L</sub>=b<sub>L</sub>−a<sub>L</sub>，β<sub>R</sub>=b<sub>R</sub>−a<sub>R</sub>；一测回：β=(β<sub>L</sub>+β<sub>R</sub>)/2；各测回平均：Σβ/n。</p>
+        <p>2C = L − (R ± 180°)；2C 互差 = 各方向 2C 的最大值 − 最小值。</p>
+        <h3>限差</h3>
+        <p>DJ6：半测回角值互差 40″，各测回角值互差 24″，2C 互差按教材不作要求。DJ2：半测回 20″，各测回 12″，2C 互差 13″。限差随规范版本和等级变化，以现行规范与指导教师要求为准。</p>
+        <h3>操作</h3>
+        <p>点读数格子或距离框，用底部数字键盘。度按 → 到分；分、秒满两位自动跳；秒满后自动到距离框；距离输入后按 → 下一条。</p>
+        <p class="sheet-foot">参考：GB 50026-2020 常用做法与教材测回法公式。v0.1</p>
+      </div>
+    </div>
+  </div>
+
+  <template id="tpl-round">
+    <article class="round">
+      <div class="round-head">
+        <span class="round-no"></span>
+        <span class="round-angle"></span>
+        <button type="button" class="btn-x btn-del" aria-label="删除该测回">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="read-row" data-target="a">
+        <span class="read-tag">A</span>
+        <div class="dms">
+          <button type="button" class="cell" data-part="d" aria-label="度"><span class="cell-val"></span><span class="cell-unit">°</span></button>
+          <button type="button" class="cell" data-part="m" aria-label="分"><span class="cell-val"></span><span class="cell-unit">′</span></button>
+          <button type="button" class="cell" data-part="s" aria-label="秒"><span class="cell-val"></span><span class="cell-unit">″</span></button>
+        </div>
+        <button type="button" class="dist-cell" data-dist><span class="dist-val"></span><span class="dist-unit">m</span></button>
+      </div>
+      <div class="read-row" data-target="b">
+        <span class="read-tag">B</span>
+        <div class="dms">
+          <button type="button" class="cell" data-part="d" aria-label="度"><span class="cell-val"></span><span class="cell-unit">°</span></button>
+          <button type="button" class="cell" data-part="m" aria-label="分"><span class="cell-val"></span><span class="cell-unit">′</span></button>
+          <button type="button" class="cell" data-part="s" aria-label="秒"><span class="cell-val"></span><span class="cell-unit">″</span></button>
+        </div>
+        <button type="button" class="dist-cell" data-dist><span class="dist-val"></span><span class="dist-unit">m</span></button>
+      </div>
+      <div class="round-2c" hidden></div>
+    </article>
+  </template>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
