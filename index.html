@@ -28,6 +28,7 @@
           </div>
         </div>
         <div class="header-actions">
+          <button type="button" class="chip" id="btn-history">记录</button>
           <button type="button" class="chip" id="btn-demo">示例</button>
           <button type="button" class="icon-btn" id="btn-help" aria-label="说明">?</button>
         </div>
@@ -51,7 +52,7 @@
             <li>架头大致水平、三脚架踩实；仪器轻放，立即拧紧连接螺旋。</li>
             <li>用光学或激光对中器对准测站点，偏差控制在 1–2 mm；先圆气泡粗平，再管气泡精平。</li>
             <li>开机检查电量、棱镜常数、温度气压改正和倾斜补偿。</li>
-            <li>输入测站与后视点；照准后视方向，在仪器里配置后视度盘。</li>
+            <li>输入测站、后视点和前视点；照准后视方向，在仪器里配置后视度盘。</li>
             <li>确定测回数：第 1 测回盘左起始读数约 0°，之后每测回按 180°/n 置盘。</li>
             <li>后视定向完成后，再进入第 1 测回盘左观测。</li>
           </ol>
@@ -83,6 +84,10 @@
             <label class="field">
               <span>后视点</span>
               <input id="station-bs" type="text" autocomplete="off" placeholder="如 GCP1" />
+            </label>
+            <label class="field">
+              <span>前视点</span>
+              <input id="station-fs" type="text" autocomplete="off" placeholder="如 GCP3" />
             </label>
           </div>
         </div>
@@ -158,9 +163,29 @@
           <button type="button" class="btn-primary" id="btn-new-station">新建测站</button>
         </div>
 
+        <button type="button" class="btn-table" id="btn-table">查看测回记录表 →</button>
+
         <div class="card">
           <h3>成果记录</h3>
           <pre class="report" id="report"></pre>
+        </div>
+      </section>
+
+      <!-- 5 测回法记录表（按讲义格式） -->
+      <section class="step-panel" id="step-table" hidden>
+        <button type="button" class="result-back" id="btn-table-back">← 返回成果</button>
+        <div class="card record-card">
+          <div class="record-hint">表格较宽，可左右滑动查看完整列</div>
+          <div id="record-table" class="record-scroll"></div>
+          <div class="record-formula">
+            β<sub>左</sub> = b<sub>左</sub> − a<sub>左</sub>　
+            β<sub>右</sub> = b<sub>右</sub> − a<sub>右</sub>　
+            β = (β<sub>左</sub> + β<sub>右</sub>) / 2
+          </div>
+        </div>
+        <div class="result-actions">
+          <button type="button" class="btn-ghost" id="btn-print">打印 / 存 PDF</button>
+          <button type="button" class="btn-primary" id="btn-table-new">新建测站</button>
         </div>
       </section>
     </main>
@@ -216,6 +241,25 @@
         <h3>操作</h3>
         <p>点读数格子或距离框，用底部数字键盘。度按 → 到分；分、秒满两位自动跳；秒满后自动到距离框；距离输入后按 → 下一条。</p>
         <p class="sheet-foot">参考：GB 50026-2020 常用做法与教材测回法公式。v0.1</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet-wrap" id="history-sheet" hidden>
+    <div class="sheet history-sheet" role="dialog" aria-modal="true" aria-labelledby="history-title">
+      <div class="sheet-head">
+        <h2 id="history-title">历史测站</h2>
+        <button type="button" class="icon-btn" id="btn-history-close" aria-label="关闭">✕</button>
+      </div>
+      <div class="sheet-body">
+        <div id="history-list-view">
+          <input id="history-search" class="history-search" type="search" placeholder="搜索测站、后视点、前视点或日期" autocomplete="off" />
+          <div id="history-list" class="history-list"></div>
+        </div>
+        <div id="history-detail-view" hidden>
+          <button type="button" class="result-back" id="btn-history-back">← 返回列表</button>
+          <div id="history-detail" class="record-scroll"></div>
+        </div>
       </div>
     </div>
   </div>
