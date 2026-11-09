@@ -65,6 +65,7 @@ check('示例平均 125°14′24″', (await page.textContent('#sum-angle')) ===
 check('示例一测回 21/27', (await page.textContent('#one-sets')).includes('125°14′21″') && (await page.textContent('#one-sets')).includes('125°14′27″'));
 check('示例 2C 值', (await page.textContent('#two-c')).includes('−30″'));
 check('示例检核通过', (await page.textContent('#checks')).includes('合格'));
+check('流程进度 4/4 面', (await page.textContent('#flow-count')) === '4 / 4 面');
 
 /* 离线 */
 await context.setOffline(true);
@@ -72,25 +73,24 @@ await page.reload({ waitUntil: 'domcontentloaded' });
 await page.waitForTimeout(800);
 const offline = await page.evaluate(() => ({
   title: document.title,
-  steps: document.querySelectorAll('.step').length,
+  flow: document.querySelector('#flow-title')?.textContent,
   body: document.body.innerText.length,
 }));
-check('离线后仍可打开', offline.steps === 4 && offline.body > 80, JSON.stringify(offline));
+check('离线后仍可打开', offline.flow === '成果' && offline.body > 80, JSON.stringify(offline));
 check('离线后成果可见', (await page.textContent('#sum-angle')) === '125°14′24″');
-await page.click('.step[data-step="2"]');
+await page.click('#btn-result-back');
 await page.waitForTimeout(150);
-await page.click('#step-2 .round[data-index="0"] .read-row[data-target="a"] .cell[data-part="d"]');
+await page.click('#face-round .round[data-index="1"] .read-row[data-target="a"] .cell[data-part="d"]');
 await page.waitForTimeout(120);
 check('离线后键盘可用', await page.isVisible('#keypad'));
 await context.setOffline(false);
 
-/* 边界：非法分 */
-await page.evaluate(() => localStorage.clear());
-await page.reload({ waitUntil: 'networkidle' });
-await page.waitForTimeout(300);
+/* 新建测站 → 边界：非法分 */
+await page.click('#btn-new-station');
+await page.waitForTimeout(150);
 await page.click('#btn-next');
 await page.waitForTimeout(200);
-await page.click('#step-2 .round[data-index="0"] .read-row[data-target="a"] .cell[data-part="d"]');
+await page.click('#face-round .round[data-index="0"] .read-row[data-target="a"] .cell[data-part="d"]');
 await press('0');
 await press('next');
 await press('6');
@@ -98,8 +98,8 @@ await press('0');
 await page.waitForTimeout(120);
 check(
   '分=60 标红',
-  (await page.locator('#step-2 .cell.invalid').count()) >= 1,
-  String(await page.locator('#step-2 .cell.invalid').count()),
+  (await page.locator('#face-round .cell.invalid').count()) >= 1,
+  String(await page.locator('#face-round .cell.invalid').count()),
 );
 
 /* 布局 */
