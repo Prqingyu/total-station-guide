@@ -132,6 +132,7 @@ check('各测回平均 125°14′24″', (await page.textContent('#sum-angle')) 
 const checksText = await page.textContent('#checks');
 check('半测回互差 6″ 合格', checksText.includes('6″') && checksText.includes('≤40″ 合格'), checksText);
 check('各测回互差 6″ 合格', checksText.includes('≤24″ 合格'), checksText);
+check('2C 互差 6″', (await page.textContent('#checks .check-row:last-child .check-value')) === '6″', await page.textContent('#checks .check-row:last-child .check-value'));
 check('DJ6 2C 互差不要求', checksText.includes('不要求'), checksText);
 const oneSets = await page.textContent('#one-sets');
 check('一测回角值 21/27', oneSets.includes('125°14′21″') && oneSets.includes('125°14′27″'), oneSets);
@@ -159,7 +160,7 @@ await page.waitForTimeout(150);
 await page.selectOption('#instrument', 'DJ2');
 await page.click('.step[data-step="4"]');
 await page.waitForTimeout(200);
-check('DJ2 下 2C 互差超限', (await page.locator('#checks .check-badge.bad').count()) >= 1);
+check('DJ2 下 2C 互差按 13″ 判定', (await page.textContent('#checks .check-row:last-child .check-badge')).includes('≤13″'), await page.textContent('#checks .check-row:last-child .check-badge'));
 check('仪器标签为 DJ2', (await page.textContent('#instrument-tag')) === 'DJ2');
 await page.click('.step[data-step="1"]');
 await page.waitForTimeout(150);
